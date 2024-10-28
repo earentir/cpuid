@@ -1,43 +1,83 @@
-// cmd/cpuinfo/main.go
+// main.go
 package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/earentir/cpuid"
 )
 
+var (
+	maxFunc    uint32
+	maxExtFunc uint32
+	vendorID   string
+)
+
+func init() {
+	maxFunc, maxExtFunc = cpuid.GetMaxFunctions()
+	vendorID = cpuid.GetVendorID()
+}
+
 func main() {
-	// Get basic CPU information
-	info := cpuid.GetCPUInfo()
+	cpuid.PrintBasicInfo()
+	fmt.Println()
+	fmt.Println("==================================")
+	fmt.Println()
+	fmt.Println("Detecting CPU features for x86/x64")
+	fmt.Println("==================================")
+	printBasicInfo()
+	// fmt.Println()
+	// fmt.Println("Cache Info")
+	// fmt.Println("==========")
+	// printCacheInfo()
+	// fmt.Println()
+	// fmt.Println("Translation Lookaside Buffer Info")
+	// fmt.Println("=================================")
+	// printTLBInfo()
+	fmt.Println()
+	fmt.Println("Intel Hybric Core Info")
+	fmt.Println("======================")
+	printIntelHybridInfo()
 
-	fmt.Printf("CPU Information:\n")
-	fmt.Printf("Vendor: %s\n", info.VendorID)
-	fmt.Printf("Brand String: %s\n", info.BrandString)
-	fmt.Printf("Family: %d\n", info.Family)
-	fmt.Printf("Model: %d\n", info.Model)
-	fmt.Printf("Stepping: %d\n", info.Stepping)
-	fmt.Printf("Max Standard Function: %d\n", info.MaxStandard)
-	fmt.Printf("Max Extended Function: 0x%08x\n\n", info.MaxExtended)
+	// cpuid.PrintProcessorInfo()
+}
 
-	// Get cache information
-	fmt.Printf("Cache Information:\n")
-	for _, cache := range cpuid.GetCacheInfo() {
-		fmt.Printf("L%d %s Cache:\n", cache.Level, cache.Type)
-		fmt.Printf("  Size: %d KB\n", cache.Size/1024)
-		fmt.Printf("  Ways: %d\n", cache.Ways)
-		fmt.Printf("  Line Size: %d bytes\n", cache.LineSize)
-		fmt.Printf("  Sets: %d\n", cache.Sets)
-		fmt.Printf("  Cores Sharing: %d\n\n", cache.SharedCores)
-	}
+func printBasicInfo() {
+	processorInfo := cpuid.GetProcessorInfo(maxFunc, maxExtFunc)
+	fmt.Printf("  CPUID Max Standard Function: %d\n", processorInfo.MaxFunc)
+	fmt.Printf("  CPUID Max Extended Function: 0x%08x\n", processorInfo.MaxExtFunc)
+	fmt.Printf("  CPU Vendor ID:               %s\n", processorInfo.VendorID)
+	fmt.Println()
+	fmt.Println("Processor Details")
+	fmt.Println("=================")
+	fmt.Printf("  Brand String:   %s\n", processorInfo.BrandString)
+	fmt.Printf("  Family:         %d (0x%x)\n", processorInfo.EffectiveFamily, processorInfo.EffectiveFamily)
+	fmt.Printf("  Model:          %d (0x%x)\n", processorInfo.EffectiveModel, processorInfo.EffectiveModel)
+	fmt.Printf("  Stepping ID:    %s\n", processorInfo.SteppingID)
+	fmt.Printf("  Processor Type: %s\n", processorInfo.ProcessorType)
+	fmt.Println()
+	fmt.Printf("  Max Logical Processors: %d\n", processorInfo.MaxLogicalProcessors)
+	fmt.Printf("  Initial APIC ID: %d\n", processorInfo.InitialAPICID)
+	fmt.Printf("  Physical Address Bits: %d\n", processorInfo.PhysicalAddressBits)
+	fmt.Printf("  Linear Address Bits: %d\n", processorInfo.LinearAddressBits)
+	fmt.Printf("  Cores: %d\n", processorInfo.CoreCount)
+	fmt.Printf("  Threads Per Core: %d\n", processorInfo.ThreadPerCore)
 
-	// Get CPU features
-	fmt.Printf("CPU Features:\n")
-	for setName, features := range cpuid.GetFeatures() {
-		if len(features) > 0 {
-			fmt.Printf("\n%s:\n", setName)
-			fmt.Printf("  %s\n", strings.Join(features, ", "))
-		}
-	}
+}
+
+func printCacheInfo() {
+	caches := cpuid.GetCacheInfo(maxFunc, maxExtFunc, vendorID)
+	cpuid.PrintCacheTable(caches)
+}
+
+func printTLBInfo() {
+	tlbs := cpuid.GetTLBInfo(maxFunc, maxExtFunc, vendorID)
+	cpuid.PrintTLBInfo(tlbs)
+}
+
+func printIntelHybridInfo() {
+	hybridInfo := cpuid.GetIntelHybrid()
+	fmt.Printf("  Hybrid Core: %t\n", hybridInfo.HybridCPU)
+	fmt.Printf("  Native Model ID: %d\n", hybridInfo.NativeModelID)
+	fmt.Printf("  Hybrid Model ID: %d\n", hybridInfo.CoreType)
 }

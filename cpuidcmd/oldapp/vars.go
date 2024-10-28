@@ -1,89 +1,4 @@
-package cpuid
-
-var (
-	extb uint32
-)
-
-// FeatureSet defines a group of CPU features and how to query them
-type FeatureSet struct {
-	name      string            // Display name
-	leaf      uint32            // CPUID leaf (eax input)
-	subleaf   uint32            // CPUID subleaf (ecx input)
-	register  int               // Which register to use (0=EAX, 1=EBX, 2=ECX, 3=EDX)
-	condition func(uint32) bool // Optional condition function
-	group     string            // Group name
-	features  map[int]Feature   // Feature map
-}
-
-// Feature represents a CPU feature with its description and function
-type Feature struct {
-	name                  string
-	description           string
-	function              string
-	vendor                string // "amd", "intel", or "common"
-	equivalentFeatureName string // equivalent feature name here
-	equivalent            int    // equivalent int here
-}
-
-// CPUCacheInfo Stores information about the CPU cache
-type CPUCacheInfo struct {
-	Level            uint32
-	Type             string
-	SizeKB           uint32
-	Ways             uint32
-	LineSizeBytes    uint32
-	TotalSets        uint32
-	MaxCoresSharing  uint32
-	Flags            uint32
-	SelfInitializing bool
-	FullyAssociative bool
-	MaxProcessorIDs  uint32
-	WritePolicy      string
-}
-
-// ProcessorInfo Stores Basic Information about the CPU
-type ProcessorInfo struct {
-	SteppingID           string
-	ModelID              string
-	FamilyID             string
-	ProcessorType        string
-	ExtendedModelID      string
-	ExtendedFamilyID     string
-	EffectiveModel       uint32
-	EffectiveFamily      uint32
-	VendorID             string
-	MaxFunc              uint32
-	MaxExtFunc           uint32
-	BrandString          string
-	MaxLogicalProcessors uint32
-	InitialAPICID        uint32
-	PhysicalAddressBits  uint32
-	LinearAddressBits    uint32
-	CoreCount            uint32
-	ThreadPerCore        uint32
-}
-
-// TLBEntry represents a single TLB entry configuration
-type TLBEntry struct {
-	PageSize      string
-	Entries       int
-	Associativity string
-}
-
-// TLBLevel represents TLB information for a specific cache level
-type TLBLevel struct {
-	Data        []TLBEntry
-	Instruction []TLBEntry
-	Unified     []TLBEntry
-}
-
-// TLBInfo represents the complete TLB information for a processor
-type TLBInfo struct {
-	Vendor string
-	L1     TLBLevel
-	L2     TLBLevel
-	L3     TLBLevel
-}
+package main
 
 var cpuFeaturesList = map[string]FeatureSet{
 	"StandardECX": {
@@ -252,7 +167,7 @@ var cpuFeaturesList = map[string]FeatureSet{
 		subleaf:   0,
 		register:  2,
 		group:     "AMD",
-		condition: func(f uint32) bool { return isAMD() },
+		condition: func(f uint32) bool { return isAMD },
 		features: map[int]Feature{
 			0:  {"LAHF_LM", "LAHF/SAHF in long mode", "CPUID.80000001H:ECX.LAHF_LM[bit 0]", "amd", "", -1},
 			1:  {"CMP_LEGACY", "Core multi-processing legacy mode", "CPUID.80000001H:ECX.CMP_LEGACY[bit 1]", "amd", "", -1},
