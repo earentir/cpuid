@@ -268,7 +268,6 @@ func PrintBasicInfo() {
 	maxFunc, maxExtFunc := GetMaxFunctions()
 
 	//Continue From Here
-	fmt.Printf("\nFeature Information:\n")
 	_, _, c, d := cpuid(1, 0) // Get standard features
 	fmt.Printf("\nStandard Features ECX:\n")
 	printFeatureFlags(cpuFeaturesList["StandardECX"].features, c)

@@ -20,12 +20,12 @@ func init() {
 
 func main() {
 	cpuid.PrintBasicInfo()
-	fmt.Println()
-	fmt.Println("==================================")
-	fmt.Println()
-	fmt.Println("Detecting CPU features for x86/x64")
-	fmt.Println("==================================")
-	printBasicInfo()
+	// fmt.Println()
+	// fmt.Println("==================================")
+	// fmt.Println()
+	// fmt.Println("Detecting CPU features for x86/x64")
+	// fmt.Println("==================================")
+	// printBasicInfo()
 	// fmt.Println()
 	// fmt.Println("Cache Info")
 	// fmt.Println("==========")
@@ -34,10 +34,10 @@ func main() {
 	// fmt.Println("Translation Lookaside Buffer Info")
 	// fmt.Println("=================================")
 	// printTLBInfo()
-	fmt.Println()
-	fmt.Println("Intel Hybric Core Info")
-	fmt.Println("======================")
-	printIntelHybridInfo()
+	// fmt.Println()
+	// fmt.Println("Intel Hybric Core Info")
+	// fmt.Println("======================")
+	// printIntelHybridInfo()
 
 	// cpuid.PrintProcessorInfo()
 }
