@@ -19,27 +19,93 @@ func init() {
 }
 
 func main() {
-	cpuid.PrintBasicInfo()
-	// fmt.Println()
-	// fmt.Println("==================================")
-	// fmt.Println()
-	// fmt.Println("Detecting CPU features for x86/x64")
-	// fmt.Println("==================================")
-	// printBasicInfo()
-	// fmt.Println()
-	// fmt.Println("Cache Info")
-	// fmt.Println("==========")
-	// printCacheInfo()
-	// fmt.Println()
-	// fmt.Println("Translation Lookaside Buffer Info")
-	// fmt.Println("=================================")
-	// printTLBInfo()
-	// fmt.Println()
-	// fmt.Println("Intel Hybric Core Info")
-	// fmt.Println("======================")
-	// printIntelHybridInfo()
+	fmt.Println("==================================")
+	fmt.Println()
+	fmt.Println("Detecting CPU features for x86/x64")
+	fmt.Println("==================================")
+	fmt.Println("Check if SSE4.2 is supported on this CPU")
+	checkFeature()
+	fmt.Println()
+	fmt.Println("All Available CPU Features")
+	fmt.Println("==========================")
+	getAllFeatureCategories()
+	fmt.Println()
+	fmt.Println("All Available CPU Features with Details")
+	fmt.Println("========================================")
+	getAllFeatureCategoriesWithDetails()
+	fmt.Println()
+	fmt.Println("All Known Features in StandardECX")
+	fmt.Println("==================================")
+	getAllKnownFeaturesCategory("StandardECX")
+	fmt.Println()
+	fmt.Println("All Supported Features in StandardECX")
+	fmt.Println("=====================================")
+	getAllSupportedFeaturesCategory("StandardECX")
+	fmt.Println()
+	fmt.Println("Basic Info")
+	fmt.Println("==========")
+	printBasicInfo()
+	fmt.Println()
+	fmt.Println("Cache Info")
+	fmt.Println("==========")
+	printCacheInfo()
+	fmt.Println()
+	fmt.Println("Translation Lookaside Buffer Info")
+	fmt.Println("=================================")
+	printTLBInfo()
+	fmt.Println()
+	fmt.Println("Intel Hybric Core Info")
+	fmt.Println("======================")
+	printIntelHybridInfo()
 
 	// cpuid.PrintProcessorInfo()
+}
+
+func getAllSupportedFeaturesCategory(category string) {
+	supportedFeatures := cpuid.GetSupportedFeatures(category)
+	fmt.Println("\nSupported Features in StandardECX:")
+	for _, f := range supportedFeatures {
+		fmt.Println(" -", f)
+	}
+}
+
+func getAllKnownFeaturesCategory(category string) {
+	knownFeatures := cpuid.GetAllKnownFeatures(category)
+	fmt.Println("\nKnown Features in StandardECX:")
+	for _, f := range knownFeatures {
+		fmt.Println(" -", f)
+	}
+}
+
+func getAllFeatureCategoriesWithDetails() {
+	detailedCategories := cpuid.GetAllFeatureCategoriesDetailed()
+	for catName, features := range detailedCategories {
+		fmt.Println("Category:", catName)
+		for _, f := range features {
+			line := fmt.Sprintf("  - %s: %s (Vendor: %s)", f["name"], f["description"], f["vendor"])
+			if eq, ok := f["equivalent"]; ok {
+				line += fmt.Sprintf(" [Equivalent: %s]", eq)
+			}
+			fmt.Println(line)
+		}
+	}
+}
+
+func getAllFeatureCategories() {
+	categories := cpuid.GetAllFeatureCategories()
+	fmt.Println("All Feature Categories:")
+	for _, cat := range categories {
+		fmt.Println(" -", cat)
+	}
+}
+
+func checkFeature() {
+	featureName := "SSE4.2"
+	if cpuid.IsFeatureSupported(featureName) {
+		fmt.Printf("\n%s is supported on this CPU.\n", featureName)
+	} else {
+		fmt.Printf("\n%s is NOT supported on this CPU.\n", featureName)
+	}
 }
 
 func printBasicInfo() {
