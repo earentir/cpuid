@@ -882,7 +882,7 @@ var cpuFeaturesList = map[string]FeatureSet{
 			9:  {"COMPUTE_UNIT_ID", "Compute Unit ID", "CPUID.8000001D:EAX.COMPUTE_UNIT_ID[bits 15-8]", "amd", "", -1},
 			10: {"NUM_SHARING", "Number of Cores Sharing Cache", "CPUID.8000001D:EAX.NUM_SHARING[bits 25-14]", "amd", "", -1},
 		},
-	}, "memoryTypeEDX": {
+	}, "MemoryTypeEDX": {
 		name:     "Memory Type and Attribute",
 		leaf:     1,
 		subleaf:  0,
