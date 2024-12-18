@@ -271,6 +271,7 @@ func GetAllFeatureCategories() []string {
 	}
 	//sort categories
 	sort.Strings(categories)
+
 	return categories
 }
 
@@ -394,26 +395,32 @@ func IsFeatureSupported(featureName string) bool {
 	return false
 }
 
-// IntelHypridInfo Stores information about hybrid CPUs for Intel processors
-type IntelHypridInfo struct {
-	HybridCPU     bool
-	NativeModelID uint32
-	CoreType      uint32
-}
-
-// GetIntelHybrid returns information about hybrid CPUs for Intel processors
-func GetIntelHybrid() IntelHypridInfo {
+// GetIntelHybrid returns information about hybrid CPUs for Intel processors.
+func GetIntelHybrid() IntelHybridInfo {
 	a, _, _, _ := cpuid(0x1A, 0)
-	if a&1 != 0 {
-		return IntelHypridInfo{
-			HybridCPU:     true,
-			NativeModelID: (a >> 24) & 0xFF,
-			CoreType:      (a >> 16) & 0xFF,
-		}
+
+	if (a & 1) == 0 {
+		// Not hybrid
+		return IntelHybridInfo{HybridCPU: false}
 	}
-	return IntelHypridInfo{
-		HybridCPU: false,
+
+	hybridInfo := IntelHybridInfo{
+		HybridCPU:     true,
+		NativeModelID: (a >> 24) & 0xFF,
+		CoreType:      (a >> 16) & 0xFF,
 	}
+
+	// Determine a human-readable core type
+	switch hybridInfo.CoreType {
+	case 1:
+		hybridInfo.CoreTypeName = "Performance core (P-core)"
+	case 2:
+		hybridInfo.CoreTypeName = "Efficient core (E-core)"
+	default:
+		hybridInfo.CoreTypeName = "Unknown core type"
+	}
+
+	return hybridInfo
 }
 
 func getCacheTypeString(cacheType uint32) string {

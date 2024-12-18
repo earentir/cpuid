@@ -85,6 +85,14 @@ type TLBInfo struct {
 	L3     TLBLevel
 }
 
+// IntelHybridInfo holds hybrid CPU information.
+type IntelHybridInfo struct {
+	HybridCPU     bool
+	NativeModelID uint32
+	CoreType      uint32
+	CoreTypeName  string
+}
+
 var cpuFeaturesList = map[string]FeatureSet{
 	"StandardECX": {
 		name:     "Standard Features ECX",
