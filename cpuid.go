@@ -269,6 +269,8 @@ func GetAllFeatureCategories() []string {
 	for category := range cpuFeaturesList {
 		categories = append(categories, category)
 	}
+	//sort categories
+	sort.Strings(categories)
 	return categories
 }
 
