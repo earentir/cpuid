@@ -37,19 +37,24 @@ The cpuid package provides a set of functions and data structures to query detai
 ## Important Functions
 
 ```go
-GetVendorID() string
+func GetVendorID() string
 ```
 - Returns the CPU vendor string (e.g., "GenuineIntel" or "AuthenticAMD").
 
 ```go
-GetMaxFunctions() (uint32, uint32)
+func GetVendorName() string
+```
+- Returns the human-readable vendor name (e.g., "Intel" or "AMD").
+
+```go
+func GetMaxFunctions() (uint32, uint32)
 ```
 - Returns the maximum supported standard and extended CPUID function values. These are essential inputs for other queries.
 
 ```go
-GetProcessorInfo(maxFunc, maxExtFunc uint32) ProcessorInfo
+func GetProcessorInfo(maxFunc, maxExtFunc uint32) ProcessorInfo
 ```
-- Accepts the maximum standard and extended function values and returns a ProcessorInfo struct containing:
+- Accepts the maximum standard and extended function values and returns a ProcessorInfo struct containing: (This needs a refactor)
 
 - Family, Model, Stepping, Extended Family/Model
 - Brand String
@@ -61,27 +66,27 @@ GetProcessorInfo(maxFunc, maxExtFunc uint32) ProcessorInfo
 ## Feature Queries
 
 ```go
-GetAllFeatureCategories() []string
+func GetAllFeatureCategories() []string
 ```
 - Returns a list of all recognized feature categories.
 
 ```go
-GetAllFeatureCategoriesDetailed() map[string][]map[string]string
+func GetAllFeatureCategoriesDetailed() map[string][]map[string]string
 ```
 - Returns a detailed map of all categories, each containing a list of features with descriptions and vendor information.
 
 ```go
-GetAllKnownFeatures(category string) []string
+func GetAllKnownFeatures(category string) []string
 ```
 - Lists all known features for a specified category.
 
 ```go
-GetSupportedFeatures(category string) []string
+func GetSupportedFeatures(category string) []string
 ```
 - Lists all supported features for a specified category on the current CPU.
 
 ```go
-IsFeatureSupported(featureName string) bool
+func IsFeatureSupported(featureName string) bool
 ```
 - Checks if a specific feature (by name) is supported by the current CPU.
 
@@ -99,6 +104,6 @@ func GetTLBInfo(maxFunc, maxExtFunc uint32) (TLBInfo, error)
 
 ## Intel Hybrid CPU
 ```go
-GetIntelHybrid() IntelHybridInfo
+func GetIntelHybrid() IntelHybridInfo
 ```
 - Returns IntelHybridInfo about hybrid Intel CPUs. Indicates if the CPU is hybrid and identifies the core type (P-core or E-core).
