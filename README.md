@@ -9,30 +9,30 @@ The cpuid package provides a set of functions and data structures to query detai
     Retrieves raw and effective CPU family, model, stepping IDs, and processor type.
     Computes the effective model and family values by considering extended family/model information.
 
-### Brand String
-Extracts the full CPU brand string, the human-readable CPU name often shown in system specifications.
+- Brand String
+    Extracts the full CPU brand string, the human-readable CPU name often shown in system specifications.
 
-### Core and Thread Topology
-Determines the number of cores and threads per core.
-Supports both Intel and AMD topologies, including detection via extended CPUID leaves.
+- Core and Thread Topology
+    Determines the number of cores and threads per core.
+    Supports both Intel and AMD topologies, including detection via extended CPUID leaves.
 
-### Addressing Capabilities
-Provides the number of physical and linear address bits, which can be useful for memory management and virtualization.
+- Addressing Capabilities
+    Provides the number of physical and linear address bits, which can be useful for memory management and virtualization.
 
-### Feature Detection
-Checks for support of various CPU instruction set extensions and features (e.g., SSE4.2, AVX, AES).
-Enumerates feature categories, known features, and which are currently supported on the host CPU.
+- Feature Detection
+    Checks for support of various CPU instruction set extensions and features (e.g., SSE4.2, AVX, AES).
+    Enumerates feature categories, known features, and which are currently supported on the host CPU.
 
-### Cache Information
-Retrieves details about each cache level (L1, L2, L3).
-Reports cache type (data, instruction, unified), size, associativity, line size, sets, and sharing details.
+- Cache Information
+    Retrieves details about each cache level (L1, L2, L3).
+    Reports cache type (data, instruction, unified), size, associativity, line size, sets, and sharing details.
 
-### TLB (Translation Lookaside Buffer) Details
-Provides TLB configuration and associativity for different page sizes and levels (L1, L2, L3).
+- TLB (Translation Lookaside Buffer) Details
+    Provides TLB configuration and associativity for different page sizes and levels (L1, L2, L3).
 
-### Intel Hybrid CPU Support
-Detects Intel’s hybrid architecture (e.g., Performance and Efficient cores).
-Identifies the core type (P-core or E-core) when running on hybrid CPUs.
+- Intel Hybrid CPU Support
+    Detects Intel’s hybrid architecture (e.g., Performance and Efficient cores).
+    Identifies the core type (P-core or E-core) when running on hybrid CPUs.
 
 ## Important Functions
 
