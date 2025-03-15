@@ -2,13 +2,12 @@
 The cpuid package provides a set of functions and data structures to query detailed information about the host CPU using the cpuid instruction. It enables you to identify the CPU vendor, supported features, caches, TLB configurations, and more on x86 and x86_64 architectures.
 
 ## Key Features
-## Vendor Identification
-Detects whether the CPU is from Intel, AMD, or another vendor.
-Obtains the vendor ID string (e.g., GenuineIntel, AuthenticAMD).
-
-### CPU Model and Family
-Retrieves raw and effective CPU family, model, stepping IDs, and processor type.
-Computes the effective model and family values by considering extended family/model information.
+- Vendor Identification
+    Detects whether the CPU is from Intel, AMD, or another vendor.
+    Obtains the vendor ID string (e.g., GenuineIntel, AuthenticAMD).
+- CPU Model and Family
+    Retrieves raw and effective CPU family, model, stepping IDs, and processor type.
+    Computes the effective model and family values by considering extended family/model information.
 
 ### Brand String
 Extracts the full CPU brand string, the human-readable CPU name often shown in system specifications.
