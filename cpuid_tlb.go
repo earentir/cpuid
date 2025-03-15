@@ -1,7 +1,10 @@
 // Package cpuid provides information about the CPU running the current program.
 package cpuid
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // GetTLBInfo returns TLB information for the CPU
 func GetTLBInfo(maxFunc, maxExtFunc uint32) (TLBInfo, error) {
@@ -29,24 +32,24 @@ func GetAMDTLBInfo(maxExtFunc uint32) TLBInfo {
 	info.L1.Data = append(info.L1.Data, TLBEntry{
 		PageSize:      "2MB/4MB",
 		Entries:       int((a >> 16) & 0xFF),
-		Associativity: getAssociativity((a >> 8) & 0xFF),
+		Associativity: getAMDAssociativity((a >> 8) & 0xFF),
 	})
 	info.L1.Data = append(info.L1.Data, TLBEntry{
 		PageSize:      "4KB",
 		Entries:       int((a >> 24) & 0xFF),
-		Associativity: getAssociativity((a >> 8) & 0xFF),
+		Associativity: getAMDAssociativity((a >> 8) & 0xFF),
 	})
 
 	// L1 Instruction TLB
 	info.L1.Instruction = append(info.L1.Instruction, TLBEntry{
 		PageSize:      "2MB/4MB",
 		Entries:       int((b >> 16) & 0xFF),
-		Associativity: getAssociativity((b >> 8) & 0xFF),
+		Associativity: getAMDAssociativity((b >> 8) & 0xFF),
 	})
 	info.L1.Instruction = append(info.L1.Instruction, TLBEntry{
 		PageSize:      "4KB",
 		Entries:       int((b >> 24) & 0xFF),
-		Associativity: getAssociativity((b >> 8) & 0xFF),
+		Associativity: getAMDAssociativity((b >> 8) & 0xFF),
 	})
 
 	// L2 TLB info from 0x80000006 if available
@@ -57,24 +60,24 @@ func GetAMDTLBInfo(maxExtFunc uint32) TLBInfo {
 		info.L2.Data = append(info.L2.Data, TLBEntry{
 			PageSize:      "2MB/4MB",
 			Entries:       int((a >> 16) & 0xFFF),
-			Associativity: getAssociativity((a >> 12) & 0xF),
+			Associativity: getAMDAssociativity((a >> 12) & 0xF),
 		})
 		info.L2.Data = append(info.L2.Data, TLBEntry{
 			PageSize:      "4KB",
 			Entries:       int((a >> 28) & 0xF),
-			Associativity: getAssociativity((a >> 12) & 0xF),
+			Associativity: getAMDAssociativity((a >> 12) & 0xF),
 		})
 
 		// L2 Instruction TLB
 		info.L2.Instruction = append(info.L2.Instruction, TLBEntry{
 			PageSize:      "2MB/4MB",
 			Entries:       int((b >> 16) & 0xFFF),
-			Associativity: getAssociativity((b >> 12) & 0xF),
+			Associativity: getAMDAssociativity((b >> 12) & 0xF),
 		})
 		info.L2.Instruction = append(info.L2.Instruction, TLBEntry{
 			PageSize:      "4KB",
 			Entries:       int((b >> 28) & 0xF),
-			Associativity: getAssociativity((b >> 12) & 0xF),
+			Associativity: getAMDAssociativity((b >> 12) & 0xF),
 		})
 
 		// L3 TLB info if supported
@@ -84,7 +87,7 @@ func GetAMDTLBInfo(maxExtFunc uint32) TLBInfo {
 			info.L3.Data = append(info.L3.Data, TLBEntry{
 				PageSize:      "1GB",
 				Entries:       int((a >> 16) & 0xFFF),
-				Associativity: getAssociativity((a >> 12) & 0xF),
+				Associativity: getAMDAssociativity((a >> 12) & 0xF),
 			})
 		}
 	}
@@ -187,5 +190,104 @@ func getTLBType(value uint32) string {
 		return "Unified"
 	default:
 		return "Unknown"
+	}
+}
+
+// Helper function to process Intel descriptors and add them to TLBInfo
+func processIntelDescriptors(info *TLBInfo, bytes ...uint32) {
+	for _, val := range bytes {
+		if val == 0 {
+			continue
+		}
+
+		for i := 0; i < 4; i++ {
+			descriptor := (val >> (i * 8)) & 0xFF
+			if entry := parseIntelDescriptor(descriptor); entry != nil {
+				// Add entry to appropriate level and type based on descriptor
+				// This is a simplified version - you might want to add more complex parsing
+				if strings.Contains(entry.PageSize, "4KB") || strings.Contains(entry.PageSize, "4MB") {
+					info.L1.Data = append(info.L1.Data, *entry)
+				}
+			}
+		}
+	}
+}
+
+// Helper function to parse Intel descriptor into TLBEntry
+func parseIntelDescriptor(descriptor uint32) *TLBEntry {
+	// This is a simplified version - you would want to expand this map
+	descriptors := map[uint32]TLBEntry{
+		0x01: {PageSize: "4KB", Entries: 32, Associativity: "4-way"},
+		0x02: {PageSize: "4MB", Entries: 2, Associativity: "4-way"},
+		0x03: {PageSize: "4KB", Entries: 64, Associativity: "4-way"},
+		0x04: {PageSize: "4MB", Entries: 8, Associativity: "4-way"},
+		// Add more descriptors as needed
+	}
+
+	if entry, ok := descriptors[descriptor]; ok {
+		return &entry
+	}
+	return nil
+}
+
+// getAMDAssociativity converts AMD's associativity value to a string description
+func getAMDAssociativity(value uint32) string {
+	switch value {
+	case 0:
+		return "Reserved"
+	case 1:
+		return "1-way (direct mapped)"
+	case 2:
+		return "2-way"
+	case 4:
+		return "4-way"
+	case 6:
+		return "6-way"
+	case 8:
+		return "8-way"
+	case 0xF:
+		return "Fully associative"
+	default:
+		return fmt.Sprintf("%d-way", value)
+	}
+}
+
+// getIntelAssociativity converts Intel's associativity value to a string description
+func getIntelAssociativity(value uint32) string {
+	switch value {
+	case 0:
+		return "Reserved"
+	case 1:
+		return "Direct mapped"
+	case 2:
+		return "2-way"
+	case 3:
+		return "3-way"
+	case 4:
+		return "4-way"
+	case 5:
+		return "6-way"
+	case 6:
+		return "8-way"
+	case 7:
+		return "12-way"
+	case 8:
+		return "16-way"
+	case 9:
+		return "32-way"
+	case 10:
+		return "48-way"
+	case 11:
+		return "64-way"
+	case 12:
+		return "96-way"
+	case 13:
+		return "128-way"
+	case 14:
+		return "Fully associative"
+	case 15:
+		return "Reserved"
+	default:
+		return fmt.Sprintf("Unknown (%d)", value)
 	}
 }
