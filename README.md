@@ -41,27 +41,56 @@ func GetVendorID() string
 ```
 - Returns the CPU vendor string (e.g., "GenuineIntel" or "AuthenticAMD").
 
+
 ```go
 func GetVendorName() string
 ```
 - Returns the human-readable vendor name (e.g., "Intel" or "AMD").
+
+
+```go
+func GetBrandString(maxExtFunc uint32) string
+```
+- Returns the full CPU brand string, which provides a detailed description of the CPU model and features.
+
 
 ```go
 func GetMaxFunctions() (uint32, uint32)
 ```
 - Returns the maximum supported standard and extended CPUID function values. These are essential inputs for other queries.
 
+
+```go
+func GetModelData() ProcessorModel
+```
+- Returns a ProcessorModel struct containing the raw and effective CPU family, model, stepping, and processor type.
+
+
 ```go
 func GetProcessorInfo(maxFunc, maxExtFunc uint32) ProcessorInfo
 ```
 - Accepts the maximum standard and extended function values and returns a ProcessorInfo struct containing: (This needs a refactor)
+    - Core Count, Threads per Core
+    - Addressing capabilities (Physical/Linear bits)
 
-- Family, Model, Stepping, Extended Family/Model
-- Brand String
-- Vendor ID
-- Core Count, Threads per Core
-- Addressing capabilities (Physical/Linear bits)
-- Max Supported Functions
+```go
+func GotEnoughCores(coreCount uint32, realcores ...bool) bool
+```
+- Checks if the CPU has enough cores for the specified workload. The realcores parameter can be used to consider only physical cores.
+
+
+## Cache and TLB Information
+```go
+func GetCacheInfo(maxFunc, maxExtFunc uint32, vendorID string) ([]CPUCacheInfo, error)
+```
+- Returns a slice of CPUCacheInfo structs describing each cache level’s properties.
+
+
+```go
+func GetTLBInfo(maxFunc, maxExtFunc uint32) (TLBInfo, error)
+```
+- Returns a TLBInfo struct containing TLB details (entries, associativity, page sizes) for L1, L2, and L3 levels.
+
 
 ## Feature Queries
 
@@ -70,36 +99,29 @@ func GetAllFeatureCategories() []string
 ```
 - Returns a list of all recognized feature categories.
 
+
 ```go
 func GetAllFeatureCategoriesDetailed() map[string][]map[string]string
 ```
 - Returns a detailed map of all categories, each containing a list of features with descriptions and vendor information.
+
 
 ```go
 func GetAllKnownFeatures(category string) []string
 ```
 - Lists all known features for a specified category.
 
+
 ```go
 func GetSupportedFeatures(category string) []string
 ```
 - Lists all supported features for a specified category on the current CPU.
 
+
 ```go
 func IsFeatureSupported(featureName string) bool
 ```
 - Checks if a specific feature (by name) is supported by the current CPU.
-
-## Cache and TLB Information
-```go
-func GetCacheInfo(maxFunc, maxExtFunc uint32, vendorID string) ([]CPUCacheInfo, error)
-```
-- Returns a slice of CPUCacheInfo structs describing each cache level’s properties.
-
-```go
-func GetTLBInfo(maxFunc, maxExtFunc uint32) (TLBInfo, error)
-```
-- Returns a TLBInfo struct containing TLB details (entries, associativity, page sizes) for L1, L2, and L3 levels.
 
 
 ## Intel Hybrid CPU
