@@ -19,48 +19,61 @@ func init() {
 }
 
 func main() {
-	fmt.Println("Detecting CPU features for x86/x64")
-	fmt.Println("==================================")
-	fmt.Println("Check if SSE4.2 is supported on this CPU")
-	checkFeature("SSE4.2")
-	fmt.Println("==================================")
+	fmt.Println("Feature Functions")
+	fmt.Println("=================")
 	fmt.Println()
-	fmt.Println("All Available CPU Features")
-	fmt.Println("==========================")
-	getAllFeatureCategories()
+
+	fmt.Println("CPU Information")
+	fmt.Println("================")
 	fmt.Println()
-	fmt.Println("All Available CPU Features with Details")
-	fmt.Println("========================================")
-	getAllFeatureCategoriesWithDetails()
-	fmt.Println()
-	fmt.Println("All Known Features in StandardECX")
-	fmt.Println("==================================")
-	getAllKnownFeaturesCategory("StandardECX")
-	fmt.Println()
-	fmt.Println("All Supported Features in StandardECX")
-	fmt.Println("=====================================")
-	getAllSupportedFeaturesCategory("StandardECX")
-	fmt.Println()
+
 	fmt.Println("Basic Info")
-	fmt.Println("==========")
+	fmt.Println("----------")
 	printBasicInfo()
 	fmt.Println()
+
 	fmt.Println("Cache Info")
-	fmt.Println("==========")
+	fmt.Println("----------")
 	printCacheInfo()
 	fmt.Println()
+
 	fmt.Println("Translation Lookaside Buffer Info")
-	fmt.Println("=================================")
+	fmt.Println("---------------------------------")
 	printTLBInfo()
 	fmt.Println()
+
 	fmt.Println("Intel Hybric Core Info")
-	fmt.Println("======================")
+	fmt.Println("----------------------")
 	printIntelHybridInfo()
+
+	fmt.Println("Check if SSE4.2 is supported on this CPU")
+	fmt.Println("----------------------------------------")
+	checkFeature("SSE4.2")
+	fmt.Println()
+
+	fmt.Println("All Available CPU Feature Categories")
+	fmt.Println("------------------------------------")
+	getAllFeatureCategories()
+	fmt.Println()
+
+	fmt.Println("All Available CPU Feature Categories with Details")
+	fmt.Println("-------------------------------------------------")
+	getAllFeatureCategoriesWithDetails()
+	fmt.Println()
+
+	fmt.Println("All Known Features in StandardECX Category")
+	fmt.Println("---------------------------------")
+	getAllKnownFeaturesCategory("StandardECX")
+	fmt.Println()
+
+	fmt.Println("All Supported Features in StandardECX Category")
+	fmt.Println("-------------------------------------")
+	getAllSupportedFeaturesCategory("StandardECX")
+	fmt.Println()
 }
 
 func getAllSupportedFeaturesCategory(category string) {
 	supportedFeatures := cpuid.GetSupportedFeatures(category)
-	fmt.Println("\nSupported Features in StandardECX:")
 	for _, f := range supportedFeatures {
 		fmt.Println(" -", f)
 	}
@@ -68,7 +81,6 @@ func getAllSupportedFeaturesCategory(category string) {
 
 func getAllKnownFeaturesCategory(category string) {
 	knownFeatures := cpuid.GetAllKnownFeatures(category)
-	fmt.Println("\nKnown Features in StandardECX:")
 	for _, f := range knownFeatures {
 		fmt.Println(" -", f)
 	}
@@ -90,7 +102,6 @@ func getAllFeatureCategoriesWithDetails() {
 
 func getAllFeatureCategories() {
 	categories := cpuid.GetAllFeatureCategories()
-	fmt.Println("All Feature Categories:")
 	for _, cat := range categories {
 		fmt.Println(" -", cat)
 	}
@@ -106,18 +117,28 @@ func checkFeature(featureName string) {
 
 func printBasicInfo() {
 	processorInfo := cpuid.GetProcessorInfo(maxFunc, maxExtFunc)
-	fmt.Printf("  CPUID Max Standard Function: %d\n", processorInfo.MaxFunc)
-	fmt.Printf("  CPUID Max Extended Function: 0x%08x\n", processorInfo.MaxExtFunc)
-	fmt.Printf("  CPU Vendor ID:               %s\n", processorInfo.VendorID)
+	processorModel := cpuid.GetModelData()
+	fmt.Printf("  CPUID Max Standard Function: %d\n", maxFunc)
+	fmt.Printf("  CPUID Max Extended Function: 0x%08x\n", maxExtFunc)
+
+	fmt.Printf("  CPU Vendor ID:               %s\n", cpuid.GetVendorID())
+	fmt.Printf("  CPU Vendor Name:             %s\n", cpuid.GetVendorName())
+
 	fmt.Println()
+
 	fmt.Println("Processor Details")
 	fmt.Println("=================")
-	fmt.Printf("  Brand String:   %s\n", processorInfo.BrandString)
-	fmt.Printf("  Family:         %d (0x%x)\n", processorInfo.EffectiveFamily, processorInfo.EffectiveFamily)
-	fmt.Printf("  Model:          %d (0x%x)\n", processorInfo.EffectiveModel, processorInfo.EffectiveModel)
-	fmt.Printf("  Stepping ID:    %s\n", processorInfo.SteppingID)
-	fmt.Printf("  Processor Type: %s\n", processorInfo.ProcessorType)
+	fmt.Println("  Brand String:", cpuid.GetBrandString(maxExtFunc))
+
 	fmt.Println()
+
+	fmt.Printf("  Family:         %d (0x%x)\n", processorModel.EffectiveFamily, processorModel.EffectiveFamily)
+	fmt.Printf("  Model:          %d (0x%x)\n", processorModel.EffectiveModel, processorModel.EffectiveModel)
+	fmt.Printf("  Stepping ID:    %s\n", processorModel.SteppingID)
+	fmt.Printf("  Processor Type: %s\n", processorModel.ProcessorType)
+
+	fmt.Println()
+
 	fmt.Printf("  Max Logical Processors: %d\n", processorInfo.MaxLogicalProcessors)
 	fmt.Printf("  Initial APIC ID: %d\n", processorInfo.InitialAPICID)
 	fmt.Printf("  Physical Address Bits: %d\n", processorInfo.PhysicalAddressBits)
