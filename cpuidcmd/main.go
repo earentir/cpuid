@@ -22,7 +22,7 @@ func main() {
 	fmt.Println("Detecting CPU features for x86/x64")
 	fmt.Println("==================================")
 	fmt.Println("Check if SSE4.2 is supported on this CPU")
-	checkFeature()
+	checkFeature("SSE4.2")
 	fmt.Println("==================================")
 	fmt.Println()
 	fmt.Println("All Available CPU Features")
@@ -56,8 +56,6 @@ func main() {
 	fmt.Println("Intel Hybric Core Info")
 	fmt.Println("======================")
 	printIntelHybridInfo()
-
-	// cpuid.PrintProcessorInfo()
 }
 
 func getAllSupportedFeaturesCategory(category string) {
@@ -98,8 +96,7 @@ func getAllFeatureCategories() {
 	}
 }
 
-func checkFeature() {
-	featureName := "SSE4.2"
+func checkFeature(featureName string) {
 	if cpuid.IsFeatureSupported(featureName) {
 		fmt.Printf("\n%s is supported on this CPU.\n", featureName)
 	} else {
@@ -130,13 +127,88 @@ func printBasicInfo() {
 }
 
 func printCacheInfo() {
-	caches := cpuid.GetCacheInfo(maxFunc, maxExtFunc, vendorID)
-	cpuid.PrintCacheTable(caches)
+	//Fetch the cache information
+	caches, err := cpuid.GetCacheInfo(maxFunc, maxExtFunc, vendorID)
+	if err != nil {
+		fmt.Println("Failed to fetch cache information:", err)
+		return
+	}
+
+	maxKeyLength := 0
+	keys := []string{
+		"L%d %s Cache:",
+		"Ways:",
+		"Line Size:",
+		"Total Sets:",
+		"Max Cores Sharing:",
+		"Self Initializing:",
+		"Fully Associative:",
+		"Max Processor IDs:",
+		"Write Policy:",
+	}
+	for _, key := range keys {
+		if len(key) > maxKeyLength {
+			maxKeyLength = len(key)
+		}
+	}
+
+	for _, cache := range caches {
+		fmt.Printf("  %-*s %d KB\n", maxKeyLength, fmt.Sprintf("L%d %s Cache:", cache.Level, cache.Type), cache.SizeKB)
+		fmt.Printf("  %-*s %d\n", maxKeyLength, "Ways:", cache.Ways)
+		fmt.Printf("  %-*s %d bytes\n", maxKeyLength, "Line Size:", cache.LineSizeBytes)
+		fmt.Printf("  %-*s %d\n", maxKeyLength, "Total Sets:", cache.TotalSets)
+		fmt.Printf("  %-*s %d\n", maxKeyLength, "Max Cores Sharing:", cache.MaxCoresSharing)
+		fmt.Printf("  %-*s %v\n", maxKeyLength, "Self Initializing:", cache.SelfInitializing)
+		fmt.Printf("  %-*s %v\n", maxKeyLength, "Fully Associative:", cache.FullyAssociative)
+		fmt.Printf("  %-*s %d\n", maxKeyLength, "Max Processor IDs:", cache.MaxProcessorIDs)
+		fmt.Printf("  %-*s %s\n", maxKeyLength, "Write Policy:", cache.WritePolicy)
+		fmt.Println()
+	}
 }
 
 func printTLBInfo() {
-	tlbs := cpuid.GetTLBInfo(maxFunc, maxExtFunc, vendorID)
-	cpuid.PrintTLBInfo(tlbs)
+	tlbs, err := cpuid.GetTLBInfo(maxFunc, maxExtFunc, vendorID)
+	if err != nil {
+		fmt.Println("Failed to fetch TLB information:", err)
+		return
+	}
+
+	// Helper function to print TLB entries
+	printEntries := func(label string, entries []cpuid.TLBEntry) {
+		if len(entries) > 0 {
+			fmt.Printf("%s:\n", label)
+			for _, entry := range entries {
+				fmt.Printf("    %s Pages: %d entries, %s\n",
+					entry.PageSize,
+					entry.Entries,
+					entry.Associativity)
+			}
+		}
+	}
+
+	// Print L1 TLB
+	if len(tlbs.L1.Data) > 0 || len(tlbs.L1.Instruction) > 0 || len(tlbs.L1.Unified) > 0 {
+		fmt.Println("L1 TLB:")
+		printEntries("  Data", tlbs.L1.Data)
+		printEntries("  Instruction", tlbs.L1.Instruction)
+		printEntries("  Unified", tlbs.L1.Unified)
+	}
+
+	// Print L2 TLB
+	if len(tlbs.L2.Data) > 0 || len(tlbs.L2.Instruction) > 0 || len(tlbs.L2.Unified) > 0 {
+		fmt.Println("\nL2 TLB:")
+		printEntries("  Data", tlbs.L2.Data)
+		printEntries("  Instruction", tlbs.L2.Instruction)
+		printEntries("  Unified", tlbs.L2.Unified)
+	}
+
+	// Print L3 TLB
+	if len(tlbs.L3.Data) > 0 || len(tlbs.L3.Instruction) > 0 || len(tlbs.L3.Unified) > 0 {
+		fmt.Println("\nL3 TLB:")
+		printEntries("  Data", tlbs.L3.Data)
+		printEntries("  Instruction", tlbs.L3.Instruction)
+		printEntries("  Unified", tlbs.L3.Unified)
+	}
 }
 
 func printIntelHybridInfo() {
