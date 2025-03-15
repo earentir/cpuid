@@ -41,20 +41,20 @@ type CPUCacheInfo struct {
 	WritePolicy      string
 }
 
+// ProcessorModel Stores the Processor Model Information
+type ProcessorModel struct {
+	SteppingID       string
+	ModelID          string
+	FamilyID         string
+	ProcessorType    string
+	ExtendedModelID  string
+	ExtendedFamilyID string
+	EffectiveModel   uint32
+	EffectiveFamily  uint32
+}
+
 // ProcessorInfo Stores Basic Information about the CPU
 type ProcessorInfo struct {
-	SteppingID           string
-	ModelID              string
-	FamilyID             string
-	ProcessorType        string
-	ExtendedModelID      string
-	ExtendedFamilyID     string
-	EffectiveModel       uint32
-	EffectiveFamily      uint32
-	VendorID             string
-	MaxFunc              uint32
-	MaxExtFunc           uint32
-	BrandString          string
 	MaxLogicalProcessors uint32
 	InitialAPICID        uint32
 	PhysicalAddressBits  uint32

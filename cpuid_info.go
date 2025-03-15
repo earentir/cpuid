@@ -29,9 +29,25 @@ func GetVendorName() string {
 	}
 }
 
-// GetProcessorInfo returns detailed information about the CPU.
-func GetProcessorInfo(maxFunc, maxExtFunc uint32) ProcessorInfo {
-	// Get processor info
+// GetBrandString returns the brand string of the CPU.
+func GetBrandString(maxExtFunc uint32) string {
+	if maxExtFunc >= 0x80000004 {
+		var brand [48]byte
+		for i := 0; i < 3; i++ {
+			a, b, c, d := cpuid(0x80000002+uint32(i), 0)
+			copy(brand[i*16:], int32ToBytes(a))
+			copy(brand[i*16+4:], int32ToBytes(b))
+			copy(brand[i*16+8:], int32ToBytes(c))
+			copy(brand[i*16+12:], int32ToBytes(d))
+		}
+		return strings.TrimSpace(string(brand[:]))
+	}
+	return ""
+}
+
+// GetModelData contains information about the processor model.
+func GetModelData() ProcessorModel {
+	// Get Model Data
 	a, _, _, _ := cpuid(1, 0)
 	steppingID := a & 0xF
 	modelID := (a >> 4) & 0xF
@@ -51,20 +67,21 @@ func GetProcessorInfo(maxFunc, maxExtFunc uint32) ProcessorInfo {
 		effectiveFamily += extendedFamilyID
 	}
 
-	// Get brand string
-	var brandString string
-	if maxExtFunc >= 0x80000004 {
-		var brand [48]byte
-		for i := 0; i < 3; i++ {
-			a, b, c, d := cpuid(0x80000002+uint32(i), 0)
-			copy(brand[i*16:], int32ToBytes(a))
-			copy(brand[i*16+4:], int32ToBytes(b))
-			copy(brand[i*16+8:], int32ToBytes(c))
-			copy(brand[i*16+12:], int32ToBytes(d))
-		}
-		brandString = strings.TrimSpace(string(brand[:]))
+	return ProcessorModel{
+		fmt.Sprintf("%d", steppingID),
+		fmt.Sprintf("%d", modelID),
+		fmt.Sprintf("%d", familyID),
+		fmt.Sprintf("%d", processorType),
+		fmt.Sprintf("%d", extendedModelID),
+		fmt.Sprintf("%d", extendedFamilyID),
+		effectiveModel,
+		effectiveFamily,
 	}
 
+}
+
+// GetProcessorInfo returns detailed information about the CPU.
+func GetProcessorInfo(maxFunc, maxExtFunc uint32) ProcessorInfo {
 	//Basic Features
 	_, b, _, _ := cpuid(1, 0)
 	maxLogicalProcessors := (b >> 16) & 0xFF
@@ -146,18 +163,6 @@ func GetProcessorInfo(maxFunc, maxExtFunc uint32) ProcessorInfo {
 	}
 
 	return ProcessorInfo{
-		fmt.Sprintf("%d", steppingID),
-		fmt.Sprintf("%d", modelID),
-		fmt.Sprintf("%d", familyID),
-		fmt.Sprintf("%d", processorType),
-		fmt.Sprintf("%d", extendedModelID),
-		fmt.Sprintf("%d", extendedFamilyID),
-		effectiveModel,
-		effectiveFamily,
-		GetVendorID(),
-		maxFunc,
-		maxExtFunc,
-		brandString,
 		maxLogicalProcessors,
 		initialAPICID,
 		physicalAddressBits,
@@ -165,4 +170,19 @@ func GetProcessorInfo(maxFunc, maxExtFunc uint32) ProcessorInfo {
 		coreCount,
 		threadPerCore,
 	}
+}
+
+// GotEnoughCores returns true if the CPU has enough cores to run the program.
+func GotEnoughCores(coreCount uint32, realcores ...bool) bool {
+	processorinfo := GetProcessorInfo(GetMaxFunctions())
+
+	useRealCores := false
+	if len(realcores) > 0 {
+		useRealCores = realcores[0]
+	}
+
+	if useRealCores {
+		return processorinfo.CoreCount >= coreCount
+	}
+	return processorinfo.MaxLogicalProcessors >= coreCount
 }
