@@ -167,7 +167,7 @@ func printCacheInfo() {
 }
 
 func printTLBInfo() {
-	tlbs, err := cpuid.GetTLBInfo(maxFunc, maxExtFunc, vendorID)
+	tlbs, err := cpuid.GetTLBInfo(maxFunc, maxExtFunc)
 	if err != nil {
 		fmt.Println("Failed to fetch TLB information:", err)
 		return
