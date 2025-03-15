@@ -156,34 +156,32 @@ func isIntel() bool {
 }
 
 // GetTLBInfo returns TLB information for the CPU
-func GetTLBInfo(maxFunc, maxExtFunc uint32, vendorID string) TLBInfo {
+func GetTLBInfo(maxFunc, maxExtFunc uint32, vendorID string) (TLBInfo, error) {
 	if isAMD() {
-		return GetAMDTLBInfo(maxExtFunc)
+		return GetAMDTLBInfo(maxExtFunc), nil
 	}
 
 	if isIntel() {
-		return GetIntelTLBInfo(maxFunc)
+		return GetIntelTLBInfo(maxFunc), nil
 	}
 
-	fmt.Println("Unknown CPU vendor")
-	return TLBInfo{}
+	return TLBInfo{}, fmt.Errorf("Unknown/Unsupported CPU vendor")
 }
 
 // GetCacheInfo returns cache information for the CPU
-func GetCacheInfo(maxFunc, maxExtFunc uint32, vendorID string) []CPUCacheInfo {
+func GetCacheInfo(maxFunc, maxExtFunc uint32, vendorID string) ([]CPUCacheInfo, error) {
 	isIntel := strings.Contains(strings.ToUpper(vendorID), "INTEL")
 	isAMD := strings.Contains(strings.ToUpper(vendorID), "AMD")
 
 	if isAMD {
-		return GetAMDCache(maxExtFunc)
+		return GetAMDCache(maxExtFunc), nil
 	}
 
 	if isIntel {
-		return GetIntelCache(maxFunc)
+		return GetIntelCache(maxFunc), nil
 	}
 
-	fmt.Println("Unknown CPU vendor")
-	return nil
+	return []CPUCacheInfo{}, fmt.Errorf("Unknown/Unsupported CPU vendor")
 }
 
 // GetAMDCache returns cache information for AMD processors
@@ -562,48 +560,6 @@ func GetIntelTLBInfo(maxFunc uint32) TLBInfo {
 	return info
 }
 
-// PrintTLBInfo prints the TLB information in a formatted way
-func PrintTLBInfo(info TLBInfo) {
-	// fmt.Printf("%s TLB Information:\n\n", info.Vendor)
-
-	// Helper function to print TLB entries
-	printEntries := func(label string, entries []TLBEntry) {
-		if len(entries) > 0 {
-			fmt.Printf("%s:\n", label)
-			for _, entry := range entries {
-				fmt.Printf("    %s Pages: %d entries, %s\n",
-					entry.PageSize,
-					entry.Entries,
-					entry.Associativity)
-			}
-		}
-	}
-
-	// Print L1 TLB
-	if len(info.L1.Data) > 0 || len(info.L1.Instruction) > 0 || len(info.L1.Unified) > 0 {
-		fmt.Println("L1 TLB:")
-		printEntries("  Data", info.L1.Data)
-		printEntries("  Instruction", info.L1.Instruction)
-		printEntries("  Unified", info.L1.Unified)
-	}
-
-	// Print L2 TLB
-	if len(info.L2.Data) > 0 || len(info.L2.Instruction) > 0 || len(info.L2.Unified) > 0 {
-		fmt.Println("\nL2 TLB:")
-		printEntries("  Data", info.L2.Data)
-		printEntries("  Instruction", info.L2.Instruction)
-		printEntries("  Unified", info.L2.Unified)
-	}
-
-	// Print L3 TLB
-	if len(info.L3.Data) > 0 || len(info.L3.Instruction) > 0 || len(info.L3.Unified) > 0 {
-		fmt.Println("\nL3 TLB:")
-		printEntries("  Data", info.L3.Data)
-		printEntries("  Instruction", info.L3.Instruction)
-		printEntries("  Unified", info.L3.Unified)
-	}
-}
-
 // Helper function to add Intel TLB entry to appropriate slice
 func addIntelTLBEntry(level *TLBLevel, tlbType string, entry TLBEntry) {
 	switch tlbType {
@@ -668,54 +624,6 @@ func int32ToBytes(i uint32) []byte {
 	return []byte{byte(i), byte(i >> 8), byte(i >> 16), byte(i >> 24)}
 }
 
-// PrintProcessorInfo prints detailed information about the CPU.
-func PrintProcessorInfo() {
-	// Get initial CPUID values
-	a, _, _, _ := cpuid(1, 0)
-	_, extb, _, _ = cpuid(7, 0)
-
-	// Print basic processor info
-	steppingID := a & 0xF
-	modelID := (a >> 4) & 0xF
-	familyID := (a >> 8) & 0xF
-	processorType := (a >> 12) & 0x3
-	extendedModelID := (a >> 16) & 0xF
-	extendedFamilyID := (a >> 20) & 0xFF
-
-	fmt.Printf("Processor Info:\n")
-	fmt.Printf("  Stepping ID: %d\n", steppingID)
-	fmt.Printf("  Model: %d\n", modelID+(extendedModelID<<4))
-	fmt.Printf("  Family: %d\n", familyID+(extendedFamilyID<<4))
-	fmt.Printf("  Processor Type: %d\n\n", processorType)
-
-	// Print all feature sets
-	for _, set := range cpuFeaturesList {
-		// Skip if there's a condition and it's not met
-		if set.condition != nil && !set.condition(0) {
-			continue
-		}
-
-		// Get the register values for this leaf/subleaf
-		a, b, c, d := cpuid(set.leaf, set.subleaf)
-
-		// Get the correct register value based on the register index
-		var regValue uint32
-		switch set.register {
-		case 0:
-			regValue = a
-		case 1:
-			regValue = b
-		case 2:
-			regValue = c
-		case 3:
-			regValue = d
-		}
-
-		fmt.Printf("\n%s:\n", set.name)
-		printFeatureFlags(set.features, regValue)
-	}
-}
-
 // GetVendorID returns the vendor ID of the CPU.
 func GetVendorID() string {
 	_, b, c, d := cpuid(0, 0)
@@ -727,60 +635,26 @@ func GetVendorID() string {
 }
 
 // Modified printFeatureFlags to only show names
-func printFeatureFlags(features map[int]Feature, reg uint32) []string {
-	var recognized []string
-	var unrecognized []string
+// func printFeatureFlags(features map[int]Feature, reg uint32) []string {
+// 	var recognized []string
+// 	var unrecognized []string
 
-	for i := 0; i < 32; i++ {
-		if (reg>>i)&1 == 1 {
-			if feature, exists := features[i]; exists {
-				recognized = append(recognized, feature.name)
-			} else {
-				unrecognized = append(unrecognized, fmt.Sprintf("Bit %d", i))
-			}
-		}
-	}
+// 	for i := 0; i < 32; i++ {
+// 		if (reg>>i)&1 == 1 {
+// 			if feature, exists := features[i]; exists {
+// 				recognized = append(recognized, feature.name)
+// 			} else {
+// 				unrecognized = append(unrecognized, fmt.Sprintf("Bit %d", i))
+// 			}
+// 		}
+// 	}
 
-	sort.Strings(recognized)
-	fmt.Printf("  %s\n", strings.Join(recognized, ", "))
-	return unrecognized
-}
+// 	sort.Strings(recognized)
+// 	fmt.Printf("  %s\n", strings.Join(recognized, ", "))
+// 	return unrecognized
+// }
 
 // Helpers
-
-// PrintCacheTable prints the cache information in a table format
-func PrintCacheTable(caches []CPUCacheInfo) {
-	maxKeyLength := 0
-	keys := []string{
-		"L%d %s Cache:",
-		"Ways:",
-		"Line Size:",
-		"Total Sets:",
-		"Max Cores Sharing:",
-		"Self Initializing:",
-		"Fully Associative:",
-		"Max Processor IDs:",
-		"Write Policy:",
-	}
-	for _, key := range keys {
-		if len(key) > maxKeyLength {
-			maxKeyLength = len(key)
-		}
-	}
-
-	for _, cache := range caches {
-		fmt.Printf("  %-*s %d KB\n", maxKeyLength, fmt.Sprintf("L%d %s Cache:", cache.Level, cache.Type), cache.SizeKB)
-		fmt.Printf("  %-*s %d\n", maxKeyLength, "Ways:", cache.Ways)
-		fmt.Printf("  %-*s %d bytes\n", maxKeyLength, "Line Size:", cache.LineSizeBytes)
-		fmt.Printf("  %-*s %d\n", maxKeyLength, "Total Sets:", cache.TotalSets)
-		fmt.Printf("  %-*s %d\n", maxKeyLength, "Max Cores Sharing:", cache.MaxCoresSharing)
-		fmt.Printf("  %-*s %v\n", maxKeyLength, "Self Initializing:", cache.SelfInitializing)
-		fmt.Printf("  %-*s %v\n", maxKeyLength, "Fully Associative:", cache.FullyAssociative)
-		fmt.Printf("  %-*s %d\n", maxKeyLength, "Max Processor IDs:", cache.MaxProcessorIDs)
-		fmt.Printf("  %-*s %s\n", maxKeyLength, "Write Policy:", cache.WritePolicy)
-		fmt.Println()
-	}
-}
 
 // getAssociativity converts AMD's associativity value to a string description
 func getAssociativity(value uint32) string {
