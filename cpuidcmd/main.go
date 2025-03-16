@@ -19,12 +19,8 @@ func init() {
 }
 
 func main() {
-	fmt.Println("Feature Functions")
-	fmt.Println("=================")
-	fmt.Println()
-
 	fmt.Println("CPU Information")
-	fmt.Println("================")
+	fmt.Println("===============")
 	fmt.Println()
 
 	fmt.Println("Basic Info")
@@ -46,9 +42,8 @@ func main() {
 	fmt.Println("----------------------")
 	printIntelHybridInfo()
 
-	fmt.Println("Check if SSE4.2 is supported on this CPU")
-	fmt.Println("----------------------------------------")
-	checkFeature("SSE4.2")
+	fmt.Println("Feature Functions")
+	fmt.Println("=================")
 	fmt.Println()
 
 	fmt.Println("All Available CPU Feature Categories")
@@ -70,49 +65,11 @@ func main() {
 	fmt.Println("-------------------------------------")
 	getAllSupportedFeaturesCategory("StandardECX")
 	fmt.Println()
-}
 
-func getAllSupportedFeaturesCategory(category string) {
-	supportedFeatures := cpuid.GetSupportedFeatures(category)
-	for _, f := range supportedFeatures {
-		fmt.Println(" -", f)
-	}
-}
-
-func getAllKnownFeaturesCategory(category string) {
-	knownFeatures := cpuid.GetAllKnownFeatures(category)
-	for _, f := range knownFeatures {
-		fmt.Println(" -", f)
-	}
-}
-
-func getAllFeatureCategoriesWithDetails() {
-	detailedCategories := cpuid.GetAllFeatureCategoriesDetailed()
-	for catName, features := range detailedCategories {
-		fmt.Println("Category:", catName)
-		for _, f := range features {
-			line := fmt.Sprintf("  - %s: %s (Vendor: %s)", f["name"], f["description"], f["vendor"])
-			if eq, ok := f["equivalent"]; ok {
-				line += fmt.Sprintf(" [Equivalent: %s]", eq)
-			}
-			fmt.Println(line)
-		}
-	}
-}
-
-func getAllFeatureCategories() {
-	categories := cpuid.GetAllFeatureCategories()
-	for _, cat := range categories {
-		fmt.Println(" -", cat)
-	}
-}
-
-func checkFeature(featureName string) {
-	if cpuid.IsFeatureSupported(featureName) {
-		fmt.Printf("\n%s is supported on this CPU.\n", featureName)
-	} else {
-		fmt.Printf("\n%s is NOT supported on this CPU.\n", featureName)
-	}
+	fmt.Println("Check if SSE4.2 is supported on this CPU")
+	fmt.Println("----------------------------------------")
+	checkFeature("SSE4.2")
+	fmt.Println()
 }
 
 func printBasicInfo() {
@@ -239,5 +196,48 @@ func printIntelHybridInfo() {
 		fmt.Printf("  Native Model ID: %d\n", hybridInfo.NativeModelID)
 		fmt.Printf("  Core Type ID: %d\n", hybridInfo.CoreType)
 		fmt.Printf("  Core Type: %s\n", hybridInfo.CoreTypeName)
+	}
+}
+
+func getAllFeatureCategories() {
+	categories := cpuid.GetAllFeatureCategories()
+	for _, cat := range categories {
+		fmt.Println(" -", cat)
+	}
+}
+
+func getAllFeatureCategoriesWithDetails() {
+	detailedCategories := cpuid.GetAllFeatureCategoriesDetailed()
+	for catName, features := range detailedCategories {
+		fmt.Println("Category:", catName)
+		for _, f := range features {
+			line := fmt.Sprintf("  - %s: %s (Vendor: %s)", f["name"], f["description"], f["vendor"])
+			if eq, ok := f["equivalent"]; ok {
+				line += fmt.Sprintf(" [Equivalent: %s]", eq)
+			}
+			fmt.Println(line)
+		}
+	}
+}
+
+func getAllKnownFeaturesCategory(category string) {
+	knownFeatures := cpuid.GetAllKnownFeatures(category)
+	for _, f := range knownFeatures {
+		fmt.Println(" -", f)
+	}
+}
+
+func getAllSupportedFeaturesCategory(category string) {
+	supportedFeatures := cpuid.GetSupportedFeatures(category)
+	for _, f := range supportedFeatures {
+		fmt.Println(" -", f)
+	}
+}
+
+func checkFeature(featureName string) {
+	if cpuid.IsFeatureSupported(featureName) {
+		fmt.Printf("\n%s is supported on this CPU.\n", featureName)
+	} else {
+		fmt.Printf("\n%s is NOT supported on this CPU.\n", featureName)
 	}
 }
