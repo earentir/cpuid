@@ -1,2 +1,4 @@
 github.com/earentir/cpuid v1.0.2 h1:Dj9n9hEWxorXlw063unVq6eVY7m15YZIft5K6/TuD8s=
 github.com/earentir/cpuid v1.0.2/go.mod h1:1iVlCHY6uqc7LlngvOvUAqspHLLBcz+v5ATGpgRMLH4=
+github.com/earentir/cpuid v1.0.5 h1:LP3McxrRCURCvz4TOk4jxxWqUxr77ZTiRQ5W7NhPyQU=
+github.com/earentir/cpuid v1.0.5/go.mod h1:hO9kDTCZXl2fTudvdQ9idf03BSEinE0Y7ym+GfL8EQM=
