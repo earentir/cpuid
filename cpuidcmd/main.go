@@ -99,10 +99,12 @@ func printBasicInfo() {
 
 	fmt.Println()
 
-	fmt.Printf("  Family:         %d (0x%x)\n", processorModel.EffectiveFamily, processorModel.EffectiveFamily)
-	fmt.Printf("  Model:          %d (0x%x)\n", processorModel.EffectiveModel, processorModel.EffectiveModel)
-	fmt.Printf("  Stepping ID:    %s\n", processorModel.SteppingID)
-	fmt.Printf("  Processor Type: %s\n", processorModel.ProcessorType)
+	fmt.Printf("  Family:           0x%x\n", processorModel.FamilyID)
+	fmt.Printf("  Extended Family:  0x%x\n", processorModel.ExtendedFamily)
+	fmt.Printf("  Model:            0x%x\n", processorModel.ModelID)
+	fmt.Printf("  Extended Model:   0x%x\n", processorModel.ExtendedModel)
+	fmt.Printf("  Stepping ID:      0x%x\n", processorModel.SteppingID)
+	fmt.Printf("  Processor Type:   %d\n", processorModel.ProcessorType)
 
 	fmt.Println()
 
