@@ -7,30 +7,30 @@ import (
 )
 
 // GetCacheInfo returns cache information for the CPU
-func GetCacheInfo(maxFunc, maxExtFunc uint32, vendorID string) ([]CPUCacheInfo, error) {
+func GetCacheInfo(maxFunc, maxExtFunc uint32, vendorID string, offline bool, filename string) ([]CPUCacheInfo, error) {
 	isIntel := strings.Contains(strings.ToUpper(vendorID), "INTEL")
 	isAMD := strings.Contains(strings.ToUpper(vendorID), "AMD")
 
 	if isAMD {
-		return GetAMDCache(maxExtFunc), nil
+		return GetAMDCache(maxExtFunc, offline, filename), nil
 	}
 
 	if isIntel {
-		return GetIntelCache(maxFunc), nil
+		return GetIntelCache(maxFunc, offline, filename), nil
 	}
 
 	return []CPUCacheInfo{}, fmt.Errorf("Unknown/Unsupported CPU vendor")
 }
 
 // GetAMDCache returns cache information for AMD processors
-func GetAMDCache(maxExtFunc uint32) []CPUCacheInfo {
+func GetAMDCache(maxExtFunc uint32, offline bool, filename string) []CPUCacheInfo {
 	if maxExtFunc < 0x8000001D {
 		return nil
 	}
 
 	var caches []CPUCacheInfo
 	for i := uint32(0); ; i++ {
-		info := GetCPUCacheDetails(0x8000001D, i)
+		info := GetCPUCacheDetails(0x8000001D, i, offline, filename)
 		if info.Type == getCacheTypeString(0) {
 			break
 		}
@@ -40,14 +40,14 @@ func GetAMDCache(maxExtFunc uint32) []CPUCacheInfo {
 }
 
 // GetIntelCache returns cache information for Intel processors
-func GetIntelCache(maxFunc uint32) []CPUCacheInfo {
+func GetIntelCache(maxFunc uint32, offline bool, filename string) []CPUCacheInfo {
 	if maxFunc < 4 {
 		return nil
 	}
 
 	var caches []CPUCacheInfo
 	for i := uint32(0); ; i++ {
-		info := GetCPUCacheDetails(4, i)
+		info := GetCPUCacheDetails(4, i, offline, filename)
 		if info.Type == getCacheTypeString(0) {
 			break
 		}
@@ -57,8 +57,8 @@ func GetIntelCache(maxFunc uint32) []CPUCacheInfo {
 }
 
 // GetCPUCacheDetails returns detailed information about the CPU cache.
-func GetCPUCacheDetails(leaf, subLeaf uint32) CPUCacheInfo {
-	a, b, c, _ := cpuid(leaf, subLeaf)
+func GetCPUCacheDetails(leaf, subLeaf uint32, offline bool, filename string) CPUCacheInfo {
+	a, b, c, _ := CPUIDWithMode(leaf, subLeaf, offline, filename)
 	cacheType := a & 0x1F
 	level := (a >> 5) & 0x7
 	lineSize := (b & 0xFFF) + 1

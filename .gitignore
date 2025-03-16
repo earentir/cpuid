@@ -27,5 +27,5 @@ go.work.sum
 cpuid
 oldapp
 cpuidcmd/cpuidcmd
-cpuidcmd/cpuid.bin
-cpuidcmd/cpuidExt.bin
+cpuidcmd/*.bin
+cpuidcmd/*.json

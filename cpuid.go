@@ -1,27 +1,55 @@
 // Package cpuid provides information about the CPU running the current program.
 package cpuid
 
-import (
-	"encoding/binary"
-	"os"
-)
-
 func cpuid(eax, ecx uint32) (a, b, c, d uint32)
 
+// cpuidoffline simulates the cpuid instruction using the data from the JSON file.
+func cpuidoffline(eax, ecx uint32, filename string) (a, b, c, d uint32) {
+	data, err := DataFromFile(filename)
+	if err != nil {
+		// If unable to load the data, return zeros.
+		return 0, 0, 0, 0
+	}
+
+	// Search for a matching leaf and subleaf.
+	for _, entry := range data.Entries {
+		if entry.Leaf == eax && entry.Subleaf == ecx {
+			return entry.EAX, entry.EBX, entry.ECX, entry.EDX
+		}
+	}
+	// If not found, return zeros.
+	return 0, 0, 0, 0
+}
+
+// CPUIDWithMode returns the result of the cpuid instruction for the given eax and ecx values.
+func CPUIDWithMode(eax, ecx uint32, offline bool, filename string) (a, b, c, d uint32) {
+	if !offline {
+		// Call the live assembly implementation.
+		return cpuid(eax, ecx)
+	}
+
+	// Use default filename if none provided.
+	if filename == "" {
+		filename = "cpuid_data.json"
+	}
+
+	return cpuidoffline(eax, ecx, filename)
+}
+
 // GetMaxFunctions returns the maximum standard and extended function values supported by the CPU.
-func GetMaxFunctions() (uint32, uint32) {
-	a, _, _, _ := cpuid(0, 0)
+func GetMaxFunctions(offline bool, filename string) (uint32, uint32) {
+	a, _, _, _ := CPUIDWithMode(0, 0, offline, filename)
 	maxFunc := a
 
-	a, _, _, _ = cpuid(0x80000000, 0)
+	a, _, _, _ = CPUIDWithMode(0x80000000, 0, offline, filename)
 	maxExtFunc := a
 
 	return maxFunc, maxExtFunc
 }
 
 // GetIntelHybrid returns information about hybrid CPUs for Intel processors.
-func GetIntelHybrid() IntelHybridInfo {
-	a, _, _, _ := cpuid(0x1A, 0)
+func GetIntelHybrid(offline bool, filename string) IntelHybridInfo {
+	a, _, _, _ := CPUIDWithMode(0x1A, 0, offline, filename)
 
 	if (a & 1) == 0 {
 		// Not hybrid
@@ -49,60 +77,4 @@ func GetIntelHybrid() IntelHybridInfo {
 
 func int32ToBytes(i uint32) []byte {
 	return []byte{byte(i), byte(i >> 8), byte(i >> 16), byte(i >> 24)}
-}
-
-// WriteCPUIDToFile calls cpuid with the provided eax and ecx values,
-// then writes the returned register values to the specified file in binary format.
-func WriteCPUIDToFile(filename string, eax, ecx uint32) error {
-	// Call the assembly cpuid function.
-	a, b, c, d := cpuid(eax, ecx)
-
-	// Create (or truncate) the file.
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	// Write each register as a 32-bit little-endian value.
-	if err := binary.Write(file, binary.LittleEndian, a); err != nil {
-		return err
-	}
-	if err := binary.Write(file, binary.LittleEndian, b); err != nil {
-		return err
-	}
-	if err := binary.Write(file, binary.LittleEndian, c); err != nil {
-		return err
-	}
-	if err := binary.Write(file, binary.LittleEndian, d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// ReadCPUIDFromFile opens the given file and reads the 4 register values
-// in the same order they were written. It returns the values so you can use them
-// as if you had run the cpuid command.
-func ReadCPUIDFromFile(filename string) (a, b, c, d uint32, err error) {
-	// Open the file for reading.
-	file, err := os.Open(filename)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	// Read the register values in little-endian order.
-	if err = binary.Read(file, binary.LittleEndian, &a); err != nil {
-		return
-	}
-	if err = binary.Read(file, binary.LittleEndian, &b); err != nil {
-		return
-	}
-	if err = binary.Read(file, binary.LittleEndian, &c); err != nil {
-		return
-	}
-	if err = binary.Read(file, binary.LittleEndian, &d); err != nil {
-		return
-	}
-	return
 }

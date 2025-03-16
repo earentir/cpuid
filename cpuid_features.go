@@ -60,7 +60,7 @@ func GetAllKnownFeatures(category string) []string {
 }
 
 // GetSupportedFeatures reports all supported features
-func GetSupportedFeatures(category string) []string {
+func GetSupportedFeatures(category string, offline bool, filename string) []string {
 	fs, exists := cpuFeaturesList[category]
 	if !exists {
 		return nil
@@ -71,7 +71,7 @@ func GetSupportedFeatures(category string) []string {
 		return nil
 	}
 
-	a, b, c, d := cpuid(fs.leaf, fs.subleaf)
+	a, b, c, d := CPUIDWithMode(fs.leaf, fs.subleaf, offline, filename)
 	var regValue uint32
 	switch fs.register {
 	case 0:
@@ -94,7 +94,7 @@ func GetSupportedFeatures(category string) []string {
 }
 
 // IsFeatureSupported reports if a feature is supported
-func IsFeatureSupported(featureName string) bool {
+func IsFeatureSupported(featureName string, offline bool, filename string) bool {
 	for _, fs := range cpuFeaturesList {
 		// Check condition if present
 		if fs.condition != nil && !fs.condition(0) {
@@ -113,7 +113,7 @@ func IsFeatureSupported(featureName string) bool {
 			continue // feature not in this category
 		}
 
-		a, b, c, d := cpuid(fs.leaf, fs.subleaf)
+		a, b, c, d := CPUIDWithMode(fs.leaf, fs.subleaf, offline, filename)
 		var regValue uint32
 		switch fs.register {
 		case 0:

@@ -260,7 +260,7 @@ var cpuFeaturesList = map[string]FeatureSet{
 		subleaf:   0,
 		register:  2,
 		group:     "AMD",
-		condition: func(f uint32) bool { return isAMD() },
+		condition: func(f uint32) bool { return isAMD(false, "") },
 		features: map[int]Feature{
 			0:  {"LAHF_LM", "LAHF/SAHF in long mode", "CPUID.80000001H:ECX.LAHF_LM[bit 0]", "amd", "", -1},
 			1:  {"CMP_LEGACY", "Core multi-processing legacy mode", "CPUID.80000001H:ECX.CMP_LEGACY[bit 1]", "amd", "", -1},

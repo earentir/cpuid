@@ -2,23 +2,56 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 
 	"github.com/earentir/cpuid"
 )
 
 var (
-	maxFunc    uint32
-	maxExtFunc uint32
-	vendorID   string
+	maxFunc     uint32
+	maxExtFunc  uint32
+	vendorID    string
+	offlineData = false
+	filename    = "cpuid_data.json"
+	writeFlag   bool
+	readFlag    string
 )
 
 func init() {
-	maxFunc, maxExtFunc = cpuid.GetMaxFunctions()
-	vendorID = cpuid.GetVendorID()
+	maxFunc, maxExtFunc = cpuid.GetMaxFunctions(offlineData, filename)
+	vendorID = cpuid.GetVendorID(offlineData, filename)
 }
 
 func main() {
+
+	flag.BoolVar(&writeFlag, "write", false, "Capture CPUID data and write to file")
+	flag.BoolVar(&offlineData, "read", false, "Use offline mode (read CPUID data from file)")
+	flag.StringVar(&filename, "filename", "cpuid_data.json", "Set the filename for read/write operations")
+	flag.Parse()
+
+	if offlineData {
+		maxFunc, maxExtFunc = cpuid.GetMaxFunctions(offlineData, filename)
+		vendorID = cpuid.GetVendorID(offlineData, filename)
+	}
+
+	if readFlag != "" {
+		filename = readFlag
+	}
+
+	if writeFlag {
+		fmt.Println("Writing CPUID to file")
+		fmt.Println("---------------------")
+		writeCPUIDToFile()
+		fmt.Println()
+		os.Exit(0)
+	}
+
+	fmt.Println("offlineData:", offlineData)
+	fmt.Println("filename:", filename)
+	fmt.Println()
+
 	fmt.Println("CPU Information")
 	fmt.Println("===============")
 	fmt.Println()
@@ -28,125 +61,82 @@ func main() {
 	printBasicInfo()
 	fmt.Println()
 
-	fmt.Println("Cache Info")
-	fmt.Println("----------")
-	printCacheInfo()
-	fmt.Println()
+	// fmt.Println("Cache Info")
+	// fmt.Println("----------")
+	// printCacheInfo()
+	// fmt.Println()
 
-	fmt.Println("Translation Lookaside Buffer Info")
-	fmt.Println("---------------------------------")
-	printTLBInfo()
-	fmt.Println()
+	// fmt.Println("Translation Lookaside Buffer Info")
+	// fmt.Println("---------------------------------")
+	// printTLBInfo()
+	// fmt.Println()
 
-	fmt.Println("Intel Hybric Core Info")
-	fmt.Println("----------------------")
-	printIntelHybridInfo()
+	// fmt.Println("Intel Hybric Core Info")
+	// fmt.Println("----------------------")
+	// printIntelHybridInfo(offlineData, filename)
 
-	fmt.Println("Feature Functions")
-	fmt.Println("=================")
-	fmt.Println()
+	// fmt.Println("Feature Functions")
+	// fmt.Println("=================")
+	// fmt.Println()
 
-	fmt.Println("All Available CPU Feature Categories")
-	fmt.Println("------------------------------------")
-	getAllFeatureCategories()
-	fmt.Println()
+	// fmt.Println("All Available CPU Feature Categories")
+	// fmt.Println("------------------------------------")
+	// getAllFeatureCategories()
+	// fmt.Println()
 
-	fmt.Println("All Available CPU Feature Categories with Details")
-	fmt.Println("-------------------------------------------------")
-	getAllFeatureCategoriesWithDetails()
-	fmt.Println()
+	// fmt.Println("All Available CPU Feature Categories with Details")
+	// fmt.Println("-------------------------------------------------")
+	// getAllFeatureCategoriesWithDetails()
+	// fmt.Println()
 
-	fmt.Println("All Known Features in StandardECX Category")
-	fmt.Println("---------------------------------")
-	getAllKnownFeaturesCategory("StandardECX")
-	fmt.Println()
+	// fmt.Println("All Known Features in StandardECX Category")
+	// fmt.Println("---------------------------------")
+	// getAllKnownFeaturesCategory("StandardECX")
+	// fmt.Println()
 
-	fmt.Println("All Supported Features in StandardECX Category")
-	fmt.Println("-------------------------------------")
-	getAllSupportedFeaturesCategory("StandardECX")
-	fmt.Println()
+	// fmt.Println("All Supported Features in StandardECX Category")
+	// fmt.Println("-------------------------------------")
+	// getAllSupportedFeaturesCategory("StandardECX")
+	// fmt.Println()
 
-	fmt.Println("Check if SSE4.2 is supported on this CPU")
-	fmt.Println("----------------------------------------")
-	checkFeature("SSE4.2")
-	fmt.Println()
+	// fmt.Println("Check if SSE4.2 is supported on this CPU")
+	// fmt.Println("----------------------------------------")
+	// checkFeature("SSE4.2")
+	// fmt.Println()
 
-	fmt.Println("Check if AVX is supported on this CPU")
-	fmt.Println("-------------------------------------")
-	checkFeature("AVX")
-	fmt.Println()
+	// fmt.Println("Check if AVX is supported on this CPU")
+	// fmt.Println("-------------------------------------")
+	// checkFeature("AVX")
+	// fmt.Println()
 
-	fmt.Println("Check if we have at least 8 real cores")
-	fmt.Println("---------------------------------------")
-	fmt.Println(checkEnoughCores(8, true))
-	fmt.Println()
-
-	fmt.Println("CPUID Storage (Experimental)")
-	fmt.Println("============================")
-	fmt.Println()
-
-	fmt.Println("Writing CPUID to file")
-	fmt.Println("---------------------")
-	writeCPUIDToFile()
-	fmt.Println()
-
-	fmt.Println("Reading CPUID from file")
-	fmt.Println("-----------------------")
-	readCPUIDFromFile()
-	fmt.Println()
+	// fmt.Println("Check if we have at least 8 real cores")
+	// fmt.Println("---------------------------------------")
+	// fmt.Println(checkEnoughCores(8, true, offlineData, filename))
+	// fmt.Println()
 }
 
 func writeCPUIDToFile() {
-	// Write CPUID to file
-	err := cpuid.WriteCPUIDToFile("cpuid.bin", 0, 0)
-	if err != nil {
-		fmt.Println("Failed to write CPUID to file:", err)
+	if err := cpuid.CaptureData("cpuid_data.json"); err != nil {
+		fmt.Println("Error capturing CPUID data:", err)
 		return
 	}
-	fmt.Println("CPUID written to file cpuid.bin")
-
-	err = cpuid.WriteCPUIDToFile("cpuidExt.bin", 0x80000000, 0)
-	if err != nil {
-		fmt.Println("Failed to write CPUID to file:", err)
-		return
-	}
-	fmt.Println("CPUID Extended written to file cpuidExt.bin")
-}
-
-func readCPUIDFromFile() {
-	// Read CPUID from file
-	fmt.Println("Reading CPUID from file")
-	a, b, c, d, err := cpuid.ReadCPUIDFromFile("cpuid.bin")
-	if err != nil {
-		fmt.Println("Failed to read CPUID from file:", err)
-		return
-	}
-	fmt.Printf("CPUID from file: EAX=0x%08x, EBX=0x%08x, ECX=0x%08x, EDX=0x%08x\n", a, b, c, d)
-
-	// Read CPUID Extended from file
-	a, _, _, _, err = cpuid.ReadCPUIDFromFile("cpuidExt.bin")
-	if err != nil {
-		fmt.Println("Failed to read CPUID from file:", err)
-		return
-	}
-	fmt.Printf("CPUID Extended from file: EAX=0x%08x\n", a)
-	return
+	fmt.Println("CPUID data captured successfully and written to cpuid_data.json.")
 }
 
 func printBasicInfo() {
-	processorInfo := cpuid.GetProcessorInfo(maxFunc, maxExtFunc)
-	processorModel := cpuid.GetModelData()
+	processorInfo := cpuid.GetProcessorInfo(maxFunc, maxExtFunc, offlineData, filename)
+	processorModel := cpuid.GetModelData(offlineData, filename)
 	fmt.Printf("  CPUID Max Standard Function: %d\n", maxFunc)
 	fmt.Printf("  CPUID Max Extended Function: 0x%08x\n", maxExtFunc)
 
-	fmt.Printf("  CPU Vendor ID:               %s\n", cpuid.GetVendorID())
-	fmt.Printf("  CPU Vendor Name:             %s\n", cpuid.GetVendorName())
+	fmt.Printf("  CPU Vendor ID:               %s\n", cpuid.GetVendorID(offlineData, filename))
+	fmt.Printf("  CPU Vendor Name:             %s\n", cpuid.GetVendorName(offlineData, filename))
 
 	fmt.Println()
 
 	fmt.Println("Processor Details")
 	fmt.Println("=================")
-	fmt.Println("  Brand String:", cpuid.GetBrandString(maxExtFunc))
+	fmt.Println("  Brand String:", cpuid.GetBrandString(maxExtFunc, offlineData, filename))
 
 	fmt.Println()
 
@@ -169,7 +159,7 @@ func printBasicInfo() {
 
 func printCacheInfo() {
 	//Fetch the cache information
-	caches, err := cpuid.GetCacheInfo(maxFunc, maxExtFunc, vendorID)
+	caches, err := cpuid.GetCacheInfo(maxFunc, maxExtFunc, vendorID, offlineData, filename)
 	if err != nil {
 		fmt.Println("Failed to fetch cache information:", err)
 		return
@@ -208,7 +198,7 @@ func printCacheInfo() {
 }
 
 func printTLBInfo() {
-	tlbs, err := cpuid.GetTLBInfo(maxFunc, maxExtFunc)
+	tlbs, err := cpuid.GetTLBInfo(maxFunc, maxExtFunc, offlineData, filename)
 	if err != nil {
 		fmt.Println("Failed to fetch TLB information:", err)
 		return
@@ -252,8 +242,8 @@ func printTLBInfo() {
 	}
 }
 
-func printIntelHybridInfo() {
-	hybridInfo := cpuid.GetIntelHybrid()
+func printIntelHybridInfo(offline bool, filename string) {
+	hybridInfo := cpuid.GetIntelHybrid(offline, filename)
 	fmt.Printf("  Hybrid CPU: %t\n", hybridInfo.HybridCPU)
 	if hybridInfo.HybridCPU {
 		fmt.Printf("  Native Model ID: %d\n", hybridInfo.NativeModelID)
@@ -291,20 +281,20 @@ func getAllKnownFeaturesCategory(category string) {
 }
 
 func getAllSupportedFeaturesCategory(category string) {
-	supportedFeatures := cpuid.GetSupportedFeatures(category)
+	supportedFeatures := cpuid.GetSupportedFeatures(category, offlineData, filename)
 	for _, f := range supportedFeatures {
 		fmt.Println(" -", f)
 	}
 }
 
 func checkFeature(featureName string) {
-	if cpuid.IsFeatureSupported(featureName) {
+	if cpuid.IsFeatureSupported(featureName, offlineData, filename) {
 		fmt.Printf("\n%s is supported on this CPU.\n", featureName)
 	} else {
 		fmt.Printf("\n%s is NOT supported on this CPU.\n", featureName)
 	}
 }
 
-func checkEnoughCores(coresneeded int, realcores bool) bool {
-	return cpuid.GotEnoughCores(uint32(coresneeded), realcores)
+func checkEnoughCores(coresneeded int, realcores bool, offline bool, filename string) bool {
+	return cpuid.GotEnoughCores(uint32(coresneeded), realcores, offline, filename)
 }

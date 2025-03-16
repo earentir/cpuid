@@ -7,26 +7,26 @@ import (
 )
 
 // GetTLBInfo returns TLB information for the CPU
-func GetTLBInfo(maxFunc, maxExtFunc uint32) (TLBInfo, error) {
-	if isAMD() {
-		return GetAMDTLBInfo(maxExtFunc), nil
+func GetTLBInfo(maxFunc, maxExtFunc uint32, offline bool, filename string) (TLBInfo, error) {
+	if isAMD(offline, filename) {
+		return GetAMDTLBInfo(maxExtFunc, offline, filename), nil
 	}
 
-	if isIntel() {
-		return GetIntelTLBInfo(maxFunc), nil
+	if isIntel(offline, filename) {
+		return GetIntelTLBInfo(maxFunc, offline, filename), nil
 	}
 
 	return TLBInfo{}, fmt.Errorf("Unknown/Unsupported CPU vendor")
 }
 
 // GetAMDTLBInfo retrieves TLB information for AMD processors
-func GetAMDTLBInfo(maxExtFunc uint32) TLBInfo {
+func GetAMDTLBInfo(maxExtFunc uint32, offline bool, filename string) TLBInfo {
 	info := TLBInfo{
 		Vendor: "AMD",
 	}
 
 	// L1 TLB info from 0x80000005
-	a, b, _, _ := cpuid(0x80000005, 0)
+	a, b, _, _ := CPUIDWithMode(0x80000005, 0, offline, filename)
 
 	// L1 Data TLB
 	info.L1.Data = append(info.L1.Data, TLBEntry{
@@ -54,7 +54,7 @@ func GetAMDTLBInfo(maxExtFunc uint32) TLBInfo {
 
 	// L2 TLB info from 0x80000006 if available
 	if maxExtFunc >= 0x80000006 {
-		a, b, _, _ = cpuid(0x80000006, 0)
+		a, b, _, _ = CPUIDWithMode(0x80000006, 0, offline, filename)
 
 		// L2 Data TLB
 		info.L2.Data = append(info.L2.Data, TLBEntry{
@@ -82,7 +82,7 @@ func GetAMDTLBInfo(maxExtFunc uint32) TLBInfo {
 
 		// L3 TLB info if supported
 		if maxExtFunc >= 0x80000019 {
-			a, _, _, _ = cpuid(0x80000019, 0)
+			a, _, _, _ = CPUIDWithMode(0x80000019, 0, offline, filename)
 
 			info.L3.Data = append(info.L3.Data, TLBEntry{
 				PageSize:      "1GB",
@@ -96,7 +96,7 @@ func GetAMDTLBInfo(maxExtFunc uint32) TLBInfo {
 }
 
 // GetIntelTLBInfo retrieves TLB information for Intel processors
-func GetIntelTLBInfo(maxFunc uint32) TLBInfo {
+func GetIntelTLBInfo(maxFunc uint32, offline bool, filename string) TLBInfo {
 	info := TLBInfo{
 		Vendor: "Intel",
 	}
@@ -106,14 +106,14 @@ func GetIntelTLBInfo(maxFunc uint32) TLBInfo {
 	}
 
 	// Process traditional descriptors (leaf 0x2)
-	a, b, c, d := cpuid(0x2, 0)
+	a, b, c, d := CPUIDWithMode(0x2, 0, offline, filename)
 	processIntelDescriptors(&info, a>>8, b, c, d)
 
 	// Process structured TLB information (leaf 0x18)
 	if maxFunc >= 0x18 {
 		subleaf := uint32(0)
 		for {
-			_, b, c, d = cpuid(0x18, subleaf)
+			_, b, c, d = CPUIDWithMode(0x18, subleaf, offline, filename)
 
 			if (d & 0x1F) != 1 { // 1 indicates TLB entry
 				break
