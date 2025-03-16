@@ -2,7 +2,8 @@
 package cpuid
 
 import (
-	"strings"
+	"encoding/binary"
+	"os"
 )
 
 func cpuid(eax, ecx uint32) (a, b, c, d uint32)
@@ -16,14 +17,6 @@ func GetMaxFunctions() (uint32, uint32) {
 	maxExtFunc := a
 
 	return maxFunc, maxExtFunc
-}
-
-func isAMD() bool {
-	return strings.Contains(strings.ToUpper(GetVendorID()), "AMD")
-}
-
-func isIntel() bool {
-	return strings.Contains(strings.ToUpper(GetVendorID()), "INTEL")
 }
 
 // GetIntelHybrid returns information about hybrid CPUs for Intel processors.
@@ -58,22 +51,58 @@ func int32ToBytes(i uint32) []byte {
 	return []byte{byte(i), byte(i >> 8), byte(i >> 16), byte(i >> 24)}
 }
 
-// Modified printFeatureFlags to only show names
-// func printFeatureFlags(features map[int]Feature, reg uint32) []string {
-// 	var recognized []string
-// 	var unrecognized []string
+// WriteCPUIDToFile calls cpuid with the provided eax and ecx values,
+// then writes the returned register values to the specified file in binary format.
+func WriteCPUIDToFile(filename string, eax, ecx uint32) error {
+	// Call the assembly cpuid function.
+	a, b, c, d := cpuid(eax, ecx)
 
-// 	for i := 0; i < 32; i++ {
-// 		if (reg>>i)&1 == 1 {
-// 			if feature, exists := features[i]; exists {
-// 				recognized = append(recognized, feature.name)
-// 			} else {
-// 				unrecognized = append(unrecognized, fmt.Sprintf("Bit %d", i))
-// 			}
-// 		}
-// 	}
+	// Create (or truncate) the file.
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
-// 	sort.Strings(recognized)
-// 	fmt.Printf("  %s\n", strings.Join(recognized, ", "))
-// 	return unrecognized
-// }
+	// Write each register as a 32-bit little-endian value.
+	if err := binary.Write(file, binary.LittleEndian, a); err != nil {
+		return err
+	}
+	if err := binary.Write(file, binary.LittleEndian, b); err != nil {
+		return err
+	}
+	if err := binary.Write(file, binary.LittleEndian, c); err != nil {
+		return err
+	}
+	if err := binary.Write(file, binary.LittleEndian, d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// fromFile opens the given file and reads the 4 register values
+// in the same order they were written. It returns the values so you can use them
+// as if you had run the cpuid command.
+func fromFile(filename string) (a, b, c, d uint32, err error) {
+	// Open the file for reading.
+	file, err := os.Open(filename)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	// Read the register values in little-endian order.
+	if err = binary.Read(file, binary.LittleEndian, &a); err != nil {
+		return
+	}
+	if err = binary.Read(file, binary.LittleEndian, &b); err != nil {
+		return
+	}
+	if err = binary.Read(file, binary.LittleEndian, &c); err != nil {
+		return
+	}
+	if err = binary.Read(file, binary.LittleEndian, &d); err != nil {
+		return
+	}
+	return
+}

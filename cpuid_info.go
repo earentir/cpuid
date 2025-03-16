@@ -6,6 +6,14 @@ import (
 	"strings"
 )
 
+func isAMD() bool {
+	return strings.Contains(strings.ToUpper(GetVendorID()), "AMD")
+}
+
+func isIntel() bool {
+	return strings.Contains(strings.ToUpper(GetVendorID()), "INTEL")
+}
+
 // GetVendorID returns the vendor ID of the CPU.
 func GetVendorID() string {
 	_, b, c, d := cpuid(0, 0)
@@ -68,12 +76,12 @@ func GetModelData() ProcessorModel {
 	}
 
 	return ProcessorModel{
-		fmt.Sprintf("%d", steppingID),
-		fmt.Sprintf("%d", modelID),
-		fmt.Sprintf("%d", familyID),
-		fmt.Sprintf("%d", processorType),
-		fmt.Sprintf("%d", extendedModelID),
-		fmt.Sprintf("%d", extendedFamilyID),
+		steppingID,
+		modelID,
+		familyID,
+		processorType,
+		extendedModelID,
+		extendedFamilyID,
 		effectiveModel,
 		effectiveFamily,
 	}
