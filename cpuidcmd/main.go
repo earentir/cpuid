@@ -10,13 +10,17 @@ import (
 )
 
 var (
-	maxFunc     uint32
-	maxExtFunc  uint32
-	vendorID    string
-	offlineData = false
-	filename    = "cpuid_data.json"
-	writeFlag   bool
-	readFlag    string
+	maxFunc                  uint32
+	maxExtFunc               uint32
+	vendorID                 string
+	offlineData              = false
+	filename                 = "cpuid_data.json"
+	writeFlag                bool
+	cache                    bool
+	tlb                      bool
+	hybrid                   bool
+	featurecategories        bool
+	featurecategoriesdetails bool
 )
 
 func init() {
@@ -28,6 +32,12 @@ func main() {
 
 	flag.BoolVar(&writeFlag, "write", false, "Capture CPUID data and write to file")
 	flag.BoolVar(&offlineData, "read", false, "Use offline mode (read CPUID data from file)")
+	flag.BoolVar(&cache, "cache", false, "Print cache information")
+	flag.BoolVar(&tlb, "tlb", false, "Print TLB information")
+	flag.BoolVar(&hybrid, "hybrid", false, "Print Intel Hybrid Core information")
+	flag.BoolVar(&featurecategories, "fcategories", false, "Print all available CPU feature categories")
+	flag.BoolVar(&featurecategoriesdetails, "fcategorieswithdetails", false, "Print all available CPU feature categories with details")
+
 	flag.StringVar(&filename, "filename", "cpuid_data.json", "Set the filename for read/write operations")
 	flag.Parse()
 
@@ -36,8 +46,8 @@ func main() {
 		vendorID = cpuid.GetVendorID(offlineData, filename)
 	}
 
-	if readFlag != "" {
-		filename = readFlag
+	if filename != "" {
+		filename = filename
 	}
 
 	if writeFlag {
@@ -61,58 +71,65 @@ func main() {
 	printBasicInfo()
 	fmt.Println()
 
-	// fmt.Println("Cache Info")
-	// fmt.Println("----------")
-	// printCacheInfo()
-	// fmt.Println()
+	if cache {
+		fmt.Println("Cache Info")
+		fmt.Println("----------")
+		printCacheInfo()
+		fmt.Println()
+	}
 
-	// fmt.Println("Translation Lookaside Buffer Info")
-	// fmt.Println("---------------------------------")
-	// printTLBInfo()
-	// fmt.Println()
+	if tlb {
+		fmt.Println("Translation Lookaside Buffer Info")
+		fmt.Println("---------------------------------")
+		printTLBInfo()
+		fmt.Println()
+	}
 
-	// fmt.Println("Intel Hybric Core Info")
-	// fmt.Println("----------------------")
-	// printIntelHybridInfo(offlineData, filename)
+	if hybrid {
+		fmt.Println("Intel Hybric Core Info")
+		fmt.Println("----------------------")
+		printIntelHybridInfo(offlineData, filename)
+		fmt.Println()
+	}
 
-	// fmt.Println("Feature Functions")
-	// fmt.Println("=================")
-	// fmt.Println()
+	if featurecategories {
+		fmt.Println("All Available CPU Feature Categories")
+		fmt.Println("------------------------------------")
+		getAllFeatureCategories(true)
+		fmt.Println()
+	}
 
-	// fmt.Println("All Available CPU Feature Categories")
-	// fmt.Println("------------------------------------")
-	// getAllFeatureCategories()
-	// fmt.Println()
+	if featurecategoriesdetails {
+		fmt.Println("All Available CPU Feature Categories with Details")
+		fmt.Println("-------------------------------------------------")
+		getAllFeatureCategoriesWithDetails()
+		fmt.Println()
+	}
 
-	// fmt.Println("All Available CPU Feature Categories with Details")
-	// fmt.Println("-------------------------------------------------")
-	// getAllFeatureCategoriesWithDetails()
-	// fmt.Println()
+	fmt.Println("All Known Features in StandardECX Category")
+	fmt.Println("---------------------------------")
+	getAllKnownFeaturesCategory("StandardECX", true)
+	fmt.Println()
 
-	// fmt.Println("All Known Features in StandardECX Category")
-	// fmt.Println("---------------------------------")
-	// getAllKnownFeaturesCategory("StandardECX")
-	// fmt.Println()
+	fmt.Println("All Supported Features in StandardECX Category")
+	fmt.Println("-------------------------------------")
+	getAllSupportedFeaturesCategory("StandardECX", true)
+	fmt.Println()
 
-	// fmt.Println("All Supported Features in StandardECX Category")
-	// fmt.Println("-------------------------------------")
-	// getAllSupportedFeaturesCategory("StandardECX")
-	// fmt.Println()
+	fmt.Println("Check if SSE4.2 is supported on this CPU")
+	fmt.Println("----------------------------------------")
+	checkFeature("SSE4.2")
+	fmt.Println()
 
-	// fmt.Println("Check if SSE4.2 is supported on this CPU")
-	// fmt.Println("----------------------------------------")
-	// checkFeature("SSE4.2")
-	// fmt.Println()
+	fmt.Println("Check if AVX is supported on this CPU")
+	fmt.Println("-------------------------------------")
+	checkFeature("AVX")
+	fmt.Println()
 
-	// fmt.Println("Check if AVX is supported on this CPU")
-	// fmt.Println("-------------------------------------")
-	// checkFeature("AVX")
-	// fmt.Println()
-
-	// fmt.Println("Check if we have at least 8 real cores")
-	// fmt.Println("---------------------------------------")
-	// fmt.Println(checkEnoughCores(8, true, offlineData, filename))
-	// fmt.Println()
+	fmt.Println("Check if we have at least 8 real cores")
+	fmt.Println("---------------------------------------")
+	fmt.Println(checkEnoughCores(8, true, offlineData, filename))
+	fmt.Println()
 }
 
 func writeCPUIDToFile() {
@@ -252,10 +269,17 @@ func printIntelHybridInfo(offline bool, filename string) {
 	}
 }
 
-func getAllFeatureCategories() {
+func getAllFeatureCategories(compact bool) {
 	categories := cpuid.GetAllFeatureCategories()
 	for _, cat := range categories {
-		fmt.Println(" -", cat)
+		if compact {
+			fmt.Print(cat, " ")
+			if cat == categories[len(categories)-1] {
+				fmt.Println()
+			}
+		} else {
+			fmt.Println(" -", cat)
+		}
 	}
 }
 
@@ -273,17 +297,31 @@ func getAllFeatureCategoriesWithDetails() {
 	}
 }
 
-func getAllKnownFeaturesCategory(category string) {
+func getAllKnownFeaturesCategory(category string, compact bool) {
 	knownFeatures := cpuid.GetAllKnownFeatures(category)
 	for _, f := range knownFeatures {
-		fmt.Println(" -", f)
+		if compact {
+			fmt.Print(f, " ")
+			if f == knownFeatures[len(knownFeatures)-1] {
+				fmt.Println()
+			}
+		} else {
+			fmt.Println(" -", f)
+		}
 	}
 }
 
-func getAllSupportedFeaturesCategory(category string) {
+func getAllSupportedFeaturesCategory(category string, compact bool) {
 	supportedFeatures := cpuid.GetSupportedFeatures(category, offlineData, filename)
 	for _, f := range supportedFeatures {
-		fmt.Println(" -", f)
+		if compact {
+			fmt.Print(f, " ")
+			if f == supportedFeatures[len(supportedFeatures)-1] {
+				fmt.Println()
+			}
+		} else {
+			fmt.Println(" -", f)
+		}
 	}
 }
 
