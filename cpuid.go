@@ -1,7 +1,7 @@
 // Package cpuid provides information about the CPU running the current program.
 package cpuid
 
-func cpuid(eax, ecx uint32) (a, b, c, d uint32)
+func cpuid(eax, ecx uint32) (eaxr, ebxr, ecxr, edxr uint32)
 
 // cpuidoffline simulates the cpuid instruction using the data from the JSON file.
 func cpuidoffline(eax, ecx uint32, filename string) (a, b, c, d uint32) {
