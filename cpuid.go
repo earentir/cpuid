@@ -80,10 +80,10 @@ func WriteCPUIDToFile(filename string, eax, ecx uint32) error {
 	return nil
 }
 
-// fromFile opens the given file and reads the 4 register values
+// ReadCPUIDFromFile opens the given file and reads the 4 register values
 // in the same order they were written. It returns the values so you can use them
 // as if you had run the cpuid command.
-func fromFile(filename string) (a, b, c, d uint32, err error) {
+func ReadCPUIDFromFile(filename string) (a, b, c, d uint32, err error) {
 	// Open the file for reading.
 	file, err := os.Open(filename)
 	if err != nil {
