@@ -80,6 +80,57 @@ func main() {
 	fmt.Println("---------------------------------------")
 	fmt.Println(checkEnoughCores(8, true))
 	fmt.Println()
+
+	fmt.Println("CPUID Storage (Experimental)")
+	fmt.Println("============================")
+	fmt.Println()
+
+	fmt.Println("Writing CPUID to file")
+	fmt.Println("---------------------")
+	writeCPUIDToFile()
+	fmt.Println()
+
+	fmt.Println("Reading CPUID from file")
+	fmt.Println("-----------------------")
+	readCPUIDFromFile()
+	fmt.Println()
+}
+
+func writeCPUIDToFile() {
+	// Write CPUID to file
+	err := cpuid.WriteCPUIDToFile("cpuid.bin", 0, 0)
+	if err != nil {
+		fmt.Println("Failed to write CPUID to file:", err)
+		return
+	}
+	fmt.Println("CPUID written to file cpuid.bin")
+
+	err = cpuid.WriteCPUIDToFile("cpuidExt.bin", 0x80000000, 0)
+	if err != nil {
+		fmt.Println("Failed to write CPUID to file:", err)
+		return
+	}
+	fmt.Println("CPUID Extended written to file cpuidExt.bin")
+}
+
+func readCPUIDFromFile() {
+	// Read CPUID from file
+	fmt.Println("Reading CPUID from file")
+	a, b, c, d, err := cpuid.ReadCPUIDFromFile("cpuid.bin")
+	if err != nil {
+		fmt.Println("Failed to read CPUID from file:", err)
+		return
+	}
+	fmt.Printf("CPUID from file: EAX=0x%08x, EBX=0x%08x, ECX=0x%08x, EDX=0x%08x\n", a, b, c, d)
+
+	// Read CPUID Extended from file
+	a, _, _, _, err = cpuid.ReadCPUIDFromFile("cpuidExt.bin")
+	if err != nil {
+		fmt.Println("Failed to read CPUID from file:", err)
+		return
+	}
+	fmt.Printf("CPUID Extended from file: EAX=0x%08x\n", a)
+	return
 }
 
 func printBasicInfo() {
