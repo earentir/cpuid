@@ -70,6 +70,16 @@ func main() {
 	fmt.Println("----------------------------------------")
 	checkFeature("SSE4.2")
 	fmt.Println()
+
+	fmt.Println("Check if AVX is supported on this CPU")
+	fmt.Println("-------------------------------------")
+	checkFeature("AVX")
+	fmt.Println()
+
+	fmt.Println("Check if we have at least 8 real cores")
+	fmt.Println("---------------------------------------")
+	fmt.Println(checkEnoughCores(8, true))
+	fmt.Println()
 }
 
 func printBasicInfo() {
@@ -240,4 +250,8 @@ func checkFeature(featureName string) {
 	} else {
 		fmt.Printf("\n%s is NOT supported on this CPU.\n", featureName)
 	}
+}
+
+func checkEnoughCores(coresneeded int, realcores bool) bool {
+	return cpuid.GotEnoughCores(uint32(coresneeded), realcores)
 }
