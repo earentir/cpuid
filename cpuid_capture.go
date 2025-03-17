@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-// CPUIDEntry represents one cpuid call result.
-type CPUIDEntry struct {
+// Entry represents one cpuid call result.
+type Entry struct {
 	Leaf    uint32 `json:"leaf"`
 	Subleaf uint32 `json:"subleaf"`
 	EAX     uint32 `json:"eax"`
@@ -15,14 +15,14 @@ type CPUIDEntry struct {
 	EDX     uint32 `json:"edx"`
 }
 
-// CPUIDData holds a slice of CPUIDEntry.
-type CPUIDData struct {
-	Entries []CPUIDEntry `json:"entries"`
+// Data holds a slice of Entry.
+type Data struct {
+	Entries []Entry `json:"entries"`
 }
 
 // CaptureData traverses the full CPUID hierarchy and writes the data to cpuid_data.json.
 func CaptureData(filename string) error {
-	var data CPUIDData
+	var data Data
 
 	// Capture Standard CPUID Leaves.
 	// First, get the maximum supported standard leaf.
@@ -45,7 +45,7 @@ func CaptureData(filename string) error {
 				if leaf == 0xD && subleaf > 0 && a == 0 && b == 0 && c == 0 && d == 0 {
 					break
 				}
-				data.Entries = append(data.Entries, CPUIDEntry{
+				data.Entries = append(data.Entries, Entry{
 					Leaf:    leaf,
 					Subleaf: subleaf,
 					EAX:     a,
@@ -58,7 +58,7 @@ func CaptureData(filename string) error {
 		} else {
 			// For leaves without subleaf iteration.
 			a, b, c, d := cpuid(leaf, 0)
-			data.Entries = append(data.Entries, CPUIDEntry{
+			data.Entries = append(data.Entries, Entry{
 				Leaf:    leaf,
 				Subleaf: 0,
 				EAX:     a,
@@ -81,7 +81,7 @@ func CaptureData(filename string) error {
 				if subleaf > 0 && (a&0x1F) == 0 {
 					break
 				}
-				data.Entries = append(data.Entries, CPUIDEntry{
+				data.Entries = append(data.Entries, Entry{
 					Leaf:    leaf,
 					Subleaf: subleaf,
 					EAX:     a,
@@ -93,7 +93,7 @@ func CaptureData(filename string) error {
 			}
 		} else {
 			a, b, c, d := cpuid(leaf, 0)
-			data.Entries = append(data.Entries, CPUIDEntry{
+			data.Entries = append(data.Entries, Entry{
 				Leaf:    leaf,
 				Subleaf: 0,
 				EAX:     a,
@@ -120,38 +120,19 @@ func CaptureData(filename string) error {
 	return nil
 }
 
-// DataFromFile reads cpuid_data.json and returns a CPUIDData struct.
-func DataFromFile(filename string) (CPUIDData, error) {
+// DataFromFile reads cpuid_data.json and returns a Data struct.
+func DataFromFile(filename string) (Data, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return CPUIDData{}, err
+		return Data{}, err
 	}
 	defer file.Close()
 
-	var data CPUIDData
+	var data Data
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&data); err != nil {
-		return CPUIDData{}, err
+		return Data{}, err
 	}
 
 	return data, nil
 }
-
-// func GetMaxFunctionsOffline() (uint32, uint32) {
-// 	a, _, _, _ := cpuidoffline(0, 0)
-// 	maxFunc := a
-
-// 	a, _, _, _ = cpuidoffline(0x80000000, 0)
-// 	maxExtFunc := a
-
-// 	return maxFunc, maxExtFunc
-// }
-
-// func GetVendorIDOffline() string {
-// 	_, b, c, d := cpuidoffline(0, 0)
-// 	return fmt.Sprintf("%s%s%s",
-// 		string([]byte{byte(b), byte(b >> 8), byte(b >> 16), byte(b >> 24)}),
-// 		string([]byte{byte(d), byte(d >> 8), byte(d >> 16), byte(d >> 24)}),
-// 		string([]byte{byte(c), byte(c >> 8), byte(c >> 16), byte(c >> 24)}),
-// 	)
-// }
